@@ -15,19 +15,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       </div>
 
       <div class="tool-section anim-in" style="--delay: 0.1s">
-        <h2>Settings</h2>
-        <div class="range-row">
-          <div class="field">
-            <label for="minValue">Min Value</label>
-            <input type="number" id="minValue" value="0" min="0" />
-          </div>
-          <div class="field">
-            <label for="maxValue">Max Value</label>
-            <input type="number" id="maxValue" value="16" min="0" />
-          </div>
-          <button class="btn btn-primary" id="generateBtn">Generate Table</button>
-        </div>
-
+        <h2>Bases</h2>
         <div class="quick-select">
           <button class="qs-btn" data-bases="2,8,10,16">Common</button>
           <button class="qs-btn" data-bases="all">All</button>
@@ -101,8 +89,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       }
 
       function generateTable() {
-        var min = parseInt(document.getElementById('minValue').value) || 0;
-        var max = parseInt(document.getElementById('maxValue').value) || 16;
+        var min = 0;
+        var max = 16;
         var selected = Array.from(baseContainer.querySelectorAll('.base-btn.on'))
           .map(function(b) { return parseInt(b.dataset.base); })
           .sort(function(a, b) { return a - b; });
@@ -125,7 +113,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         document.getElementById('tableContainer').innerHTML = html;
       }
 
-      document.getElementById('generateBtn').addEventListener('click', generateTable);
       generateTable();
     </script>
   </div>
@@ -168,35 +155,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     font-weight: 600;
     margin-bottom: 1rem;
     color: var(--text);
-  }
-  .range-row {
-    display: flex;
-    gap: 1rem;
-    align-items: flex-end;
-    margin-bottom: 1.25rem;
-    flex-wrap: wrap;
-  }
-  .field {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-  }
-  .field label {
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-  }
-  .field input[type="number"] {
-    width: 100px;
-    background: var(--bg-primary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    color: var(--text);
-    padding: 0.6rem 0.85rem;
-    font-family: var(--font-mono);
-    font-size: 0.85rem;
   }
   .quick-select {
     display: flex;
