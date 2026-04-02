@@ -39,7 +39,19 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         </div>
       </div>
 
-      <div class="tool-section output-section anim-in" style="--delay: 0.15s">
+      <div class="tool-section internal-section anim-in" style="--delay: 0.15s">
+        <div class="section-intro">CPython stores arbitrary integers as arrays of base 2<sup>30</sup> digits — each element holds a value from 0 to 1,073,741,823.</div>
+        <div class="output-block">
+          <div class="output-label">Digit Array</div>
+          <div class="output-value mono" id="digitArrayOutput">&mdash;</div>
+        </div>
+        <div class="output-block">
+          <div class="output-label">Base 2<sup>30</sup> Expansion</div>
+          <div class="output-value expansion" id="expansionOutput">&mdash;</div>
+        </div>
+      </div>
+
+      <div class="tool-section output-section anim-in" style="--delay: 0.2s">
         <div class="output-block">
           <div class="output-label">Formatted</div>
           <div class="output-value mono" id="formattedOutput">—</div>
@@ -208,6 +220,48 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     }
 
     /* ═══════════════════════════════════════════
+       PYTHON INTERNAL REPRESENTATION (base 2^30)
+       ═══════════════════════════════════════════ */
+    function divmod(numStr, divisor) {
+      var remainder = 0;
+      var quotient = '';
+      for (var i = 0; i < numStr.length; i++) {
+        remainder = remainder * 10 + parseInt(numStr[i]);
+        var q = Math.floor(remainder / divisor);
+        if (quotient || q > 0) quotient += q;
+        remainder = remainder % divisor;
+      }
+      return [quotient || '0', remainder];
+    }
+
+    function toPyDigits(numStr) {
+      var BASE = 1073741824; // 2^30
+      var digits = [];
+      var current = numStr;
+      while (current !== '0') {
+        var result = divmod(current, BASE);
+        current = result[0];
+        digits.push(result[1]);
+      }
+      if (digits.length === 0) digits.push(0);
+      return digits; // LSB first
+    }
+
+    function formatDigitArray(digits) {
+      return '[' + digits.slice().reverse().join(', ') + ']';
+    }
+
+    function formatExpansion(digits) {
+      var terms = [];
+      for (var i = digits.length - 1; i >= 0; i--) {
+        if (digits[i] === 0 && digits.length > 1) continue;
+        var exp = i * 30;
+        terms.push(digits[i] + ' \u00d7 <span class="base-power">2<sup>' + exp + '</sup></span>');
+      }
+      return terms.join(' + ') || '0 \u00d7 <span class="base-power">2<sup>0</sup></span>';
+    }
+
+    /* ═══════════════════════════════════════════
        INPUT SANITIZATION
        ═══════════════════════════════════════════ */
     function sanitize(str) {
@@ -229,6 +283,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     var statusMagnitude = document.getElementById('statusMagnitude');
     var statusGroups = document.getElementById('statusGroups');
     var wordCountEl = document.getElementById('wordCount');
+    var digitArrayOut = document.getElementById('digitArrayOutput');
+    var expansionOut = document.getElementById('expansionOutput');
     var randomSize = 6;
 
     /* ═══════════════════════════════════════════
@@ -244,6 +300,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         statusMagnitude.textContent = 'Magnitude: \u2014';
         statusGroups.textContent = 'Groups: \u2014';
         wordCountEl.textContent = '';
+        digitArrayOut.textContent = '\u2014';
+        expansionOut.innerHTML = '\u2014';
         return;
       }
       var clean = sanitize(raw);
@@ -254,6 +312,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
       // Formatted
       formattedOut.textContent = negSymbol + commaNumber(absStr);
+
+      // Python internal representation
+      var pyDigits = toPyDigits(absStr);
+      digitArrayOut.textContent = formatDigitArray(pyDigits);
+      expansionOut.innerHTML = formatExpansion(pyDigits);
 
       // Abbreviated (HTML for styled magnitude labels)
       var abbrName = sayName(absStr);
@@ -445,6 +508,38 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     font-size: 0.75rem;
     color: var(--text-dim);
     letter-spacing: 0.02em;
+  }
+
+  /* ── Internal representation section ── */
+  .internal-section {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .section-intro {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    line-height: 1.6;
+  }
+  .section-intro sup {
+    font-size: 0.7em;
+  }
+  .output-value.expansion {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    line-height: 2;
+    color: var(--text-muted);
+  }
+  .internal-section :global(.base-power) {
+    color: var(--accent);
+    opacity: 0.85;
+  }
+  .internal-section :global(.base-power sup) {
+    font-size: 0.75em;
   }
 
   /* ── Output section ── */
