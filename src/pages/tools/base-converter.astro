@@ -2,7 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 ---
 
-<BaseLayout title="Base Converter | David Glass">
+<BaseLayout title="Base Converter | David Glass" description="Convert numbers between any base from 1 to 36 with an interactive comparison table.">
   <div class="container">
     <div class="page-header">
       <h1>Base Converter</h1>
@@ -360,5 +360,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   }
   .table-section :global(tr:hover td.val-col) {
     background: var(--accent-glow-strong);
+  }
+  @media (max-width: 768px) {
+    .table-section {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
   }
 </style>

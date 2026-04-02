@@ -2,7 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 ---
 
-<BaseLayout title="Neural Drive | David Glass">
+<BaseLayout title="Neural Drive | David Glass" description="Watch neural networks learn to navigate traffic through evolution — or take the wheel yourself.">
   <div class="container">
     <div class="page-header">
       <h1>Neural Drive</h1>
@@ -64,11 +64,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
       <div class="sim-container anim-in" style="--delay: 0.15s">
         <div class="canvas-col road-col">
-          <canvas id="carCanvas"></canvas>
+          <canvas id="carCanvas" role="img" aria-label="Self-driving car simulation road view"></canvas>
         </div>
         <div class="canvas-col network-col">
           <div class="net-label">Neural Network</div>
-          <canvas id="networkCanvas"></canvas>
+          <canvas id="networkCanvas" role="img" aria-label="Neural network visualization"></canvas>
         </div>
       </div>
     </div>
@@ -590,9 +590,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       simState.bestCar=simState.cars[0];
 
       if(simState.mode==="AI" && localStorage.getItem("bestBrain")){
-        for(var i=0;i<simState.cars.length;i++){
-          simState.cars[i].brain=JSON.parse(localStorage.getItem("bestBrain"));
-          if(i!==0 && N>1) NeuralNetwork.mutate(simState.cars[i].brain,simState.mutation);
+        var savedBrain;
+        try { savedBrain=JSON.parse(localStorage.getItem("bestBrain")); } catch(e) { savedBrain=null; localStorage.removeItem("bestBrain"); }
+        if(savedBrain){
+          for(var i=0;i<simState.cars.length;i++){
+            simState.cars[i].brain=JSON.parse(JSON.stringify(savedBrain));
+            if(i!==0 && N>1) NeuralNetwork.mutate(simState.cars[i].brain,simState.mutation);
+          }
         }
       }
 
@@ -875,8 +879,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     box-shadow: 0 0 12px var(--accent-glow);
   }
   .controls-section :global(.act-btn.saved) {
-    border-color: #22c55e;
-    color: #22c55e;
+    border-color: var(--color-success);
+    color: var(--color-success);
     background: rgba(34, 197, 94, 0.08);
   }
 

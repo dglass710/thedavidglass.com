@@ -25,9 +25,11 @@ function estimateReadTime(body: string): number {
 const readTime = estimateReadTime(post.body || '');
 const category = post.data.categories?.[0] || null;
 const categoryLabel = category === 'projects' ? 'Case Study' : category === 'Bootcamp Blog' ? 'Development Series' : category;
+const postDescription = post.data.description
+  || (post.body ? post.body.replace(/[#*\[\]`>]/g, '').replace(/\n+/g, ' ').slice(0, 155).trim() + '...' : undefined);
 ---
 
-<BaseLayout title={`${post.data.title} | David Glass`}>
+<BaseLayout title={`${post.data.title} | David Glass`} description={postDescription}>
   <div class="progress-bar" id="progressBar"></div>
 
   <div class="container">

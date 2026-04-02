@@ -10,9 +10,13 @@
   --accent-glow-strong: rgba(34, 211, 238, 0.15);
   --text: #e2e8f0;
   --text-muted: #94a3b8;
-  --text-dim: #64748b;
+  --text-dim: #8494a7;
   --border: #161b2e;
   --border-hover: #22d3ee33;
+  --color-danger: #ef4444;
+  --color-warning: #f97316;
+  --color-caution: #eab308;
+  --color-success: #22c55e;
   --radius: 12px;
   --radius-sm: 8px;
   --font-display: 'Outfit', sans-serif;
@@ -692,4 +696,23 @@ img {
     flex-direction: column;
     text-align: center;
   }
+}
+
+/* ═══ Reduced Motion ═══ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* ═══ Print ═══ */
+@media print {
+  body { background: white; color: black; }
+  .nav, .footer { display: none; }
+  a { color: inherit; text-decoration: underline; }
 }

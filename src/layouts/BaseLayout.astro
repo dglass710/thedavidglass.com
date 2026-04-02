@@ -18,6 +18,13 @@ const currentPath = Astro.url.pathname;
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
     <meta property="og:url" content={Astro.url.href} />
+    <meta property="og:image" content={`${Astro.site}images/og-image.webp`} />
+    <meta property="og:site_name" content="David Glass" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={`${Astro.site}images/og-image.webp`} />
+    <link rel="canonical" href={Astro.url.href} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -27,7 +34,7 @@ const currentPath = Astro.url.pathname;
     <nav class="nav">
       <div class="nav-inner">
         <a href="/" class="nav-brand">David Glass</a>
-        <button class="nav-toggle" aria-label="Toggle navigation" id="nav-toggle">
+        <button class="nav-toggle" aria-label="Toggle navigation" id="nav-toggle" aria-expanded="false">
           <span id="nav-icon">&#9776;</span>
         </button>
         <ul class="nav-links" id="nav-links">
@@ -60,6 +67,7 @@ const currentPath = Astro.url.pathname;
       toggle.addEventListener('click', () => {
         const open = links.classList.toggle('open');
         icon.innerHTML = open ? '&#10005;' : '&#9776;';
+        toggle.setAttribute('aria-expanded', String(open));
       });
     </script>
   </body>

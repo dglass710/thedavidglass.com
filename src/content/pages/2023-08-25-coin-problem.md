@@ -5,8 +5,6 @@ slug: "coin-problem"
 type: page
 ---
 
-# Coin Problem
-
 ## The Frobenius Coin Problem Database
 
 The Frobenius Coin Problem asks: given a set of coin denominations, what is the largest amount that cannot be represented? That value is the Frobenius number. This research focuses on Frobenius symmetry — the distribution of attainable and unattainable values between 0 and the Frobenius number. For two denominations, symmetry always holds. For three, it’s predictable. For four, no general solution exists. The database contains data on roughly 60 million four-denomination sets (all denominations <= 200), classifying each as symmetric or not.
