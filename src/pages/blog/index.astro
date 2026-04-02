@@ -8,10 +8,6 @@ const devSeries = posts
   .filter((p) => p.data.categories?.includes('Bootcamp Blog'))
   .sort((a, b) => a.data.date.getTime() - b.data.date.getTime());
 
-const caseStudies = posts
-  .filter((p) => p.data.categories?.includes('projects'))
-  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
-
 function getExcerpt(body: string, length = 150): string {
   const cleaned = body
     .replace(/#{1,6}\s/g, '')
@@ -27,44 +23,22 @@ function formatDate(date: Date): string {
 }
 ---
 
-<BaseLayout title="Blog | David Glass">
+<BaseLayout title="Cybersecurity Development Series | David Glass">
   <div class="container">
     <div class="page-header">
-      <h1>Blog</h1>
-      <p>Cybersecurity case studies, development insights, and professional growth.</p>
+      <h1>Cybersecurity Development Series</h1>
+      <p>Documenting my professional development in offensive security, network defense, and threat analysis.</p>
     </div>
 
-    <section class="section anim-in" style="--delay: 0.05s">
-      <div class="section-header">
-        <h2>Case Studies</h2>
-      </div>
-      <p class="section-description">Hands-on security assessments, architecture projects, and technical deep dives.</p>
-      <div class="card-grid">
-        {caseStudies.map((post) => (
-          <article class="card">
-            <h3><a href={`/blog/${post.data.slug}`}>{post.data.title}</a></h3>
-            <p class="meta">{formatDate(post.data.date)}</p>
-            <p class="excerpt">{getExcerpt(post.body || '', 150)}</p>
-          </article>
-        ))}
-      </div>
-    </section>
-
-    <section class="section anim-in" style="--delay: 0.15s">
-      <div class="section-header">
-        <h2>Cybersecurity Development Series</h2>
-      </div>
-      <p class="section-description">Documenting my professional development in offensive security, network defense, and threat analysis.</p>
-      <div class="card-grid">
-        {devSeries.map((post) => (
-          <article class="card">
-            <h3><a href={`/blog/${post.data.slug}`}>{post.data.title}</a></h3>
-            <p class="meta">{formatDate(post.data.date)}</p>
-            <p class="excerpt">{getExcerpt(post.body || '', 150)}</p>
-          </article>
-        ))}
-      </div>
-    </section>
+    <div class="card-grid anim-in" style="--delay: 0.05s">
+      {devSeries.map((post) => (
+        <article class="card">
+          <h3><a href={`/blog/${post.data.slug}`}>{post.data.title}</a></h3>
+          <p class="meta">{formatDate(post.data.date)}</p>
+          <p class="excerpt">{getExcerpt(post.body || '', 150)}</p>
+        </article>
+      ))}
+    </div>
   </div>
 </BaseLayout>
 
@@ -72,12 +46,5 @@ function formatDate(date: Date): string {
   .anim-in {
     animation: fadeUp 0.5s ease both;
     animation-delay: var(--delay, 0s);
-  }
-  .section-description {
-    color: var(--text-muted);
-    font-family: var(--font-body);
-    font-size: 0.9rem;
-    margin-top: -1.25rem;
-    margin-bottom: 1.5rem;
   }
 </style>
