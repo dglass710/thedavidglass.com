@@ -120,6 +120,27 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     }
 
     /* ═══════════════════════════════════════════
+       KEYBOARD STATE (single global handler)
+       ═══════════════════════════════════════════ */
+    var keyboardState={forward:false,left:false,right:false,reverse:false};
+    document.addEventListener("keydown",function(e){
+      switch(e.key){
+        case "ArrowLeft": keyboardState.left=true; e.preventDefault(); break;
+        case "ArrowRight": keyboardState.right=true; e.preventDefault(); break;
+        case "ArrowUp": keyboardState.forward=true; e.preventDefault(); break;
+        case "ArrowDown": keyboardState.reverse=true; e.preventDefault(); break;
+      }
+    });
+    document.addEventListener("keyup",function(e){
+      switch(e.key){
+        case "ArrowLeft": keyboardState.left=false; break;
+        case "ArrowRight": keyboardState.right=false; break;
+        case "ArrowUp": keyboardState.forward=false; break;
+        case "ArrowDown": keyboardState.reverse=false; break;
+      }
+    });
+
+    /* ═══════════════════════════════════════════
        CONTROLS CLASS
        ═══════════════════════════════════════════ */
     var Controls = (function(){
@@ -128,27 +149,16 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         this.left=false;
         this.right=false;
         this.reverse=false;
-        if(type==="KEYS") this._addKeyboardListeners();
-        else if(type==="DUMMY") this.forward=true;
+        this.type=type;
+        if(type==="DUMMY") this.forward=true;
       }
-      Controls.prototype._addKeyboardListeners=function(){
-        var self=this;
-        document.addEventListener("keydown",function(e){
-          switch(e.key){
-            case "ArrowLeft": self.left=true; e.preventDefault(); break;
-            case "ArrowRight": self.right=true; e.preventDefault(); break;
-            case "ArrowUp": self.forward=true; e.preventDefault(); break;
-            case "ArrowDown": self.reverse=true; e.preventDefault(); break;
-          }
-        });
-        document.addEventListener("keyup",function(e){
-          switch(e.key){
-            case "ArrowLeft": self.left=false; break;
-            case "ArrowRight": self.right=false; break;
-            case "ArrowUp": self.forward=false; break;
-            case "ArrowDown": self.reverse=false; break;
-          }
-        });
+      Controls.prototype.sync=function(){
+        if(this.type==="KEYS"){
+          this.forward=keyboardState.forward;
+          this.left=keyboardState.left;
+          this.right=keyboardState.right;
+          this.reverse=keyboardState.reverse;
+        }
       };
       return Controls;
     })();
@@ -363,6 +373,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         };
       }
       Car.prototype.update=function(roadBorders,traffic){
+        this.controls.sync();
         if(!this.damaged){
           this._move();
           this.polygon=this._createPolygon();
