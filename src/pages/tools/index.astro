@@ -5,17 +5,23 @@ const tools = [
   {
     title: 'Password Lab',
     href: '/tools/passwords',
-    description: 'Generate secure passwords and instantly analyze their strength. Uses cryptographic randomness.',
+    description: 'Generate secure passwords with cryptographic randomness and instantly analyze their strength.',
+    icon: '\u{1F512}',
+    accent: '#22d3ee',
   },
   {
     title: 'Encryption Suite',
     href: '/tools/encryption',
-    description: 'Encrypt and decrypt messages with AES symmetric or RSA asymmetric encryption. Generate RSA key pairs on the fly.',
+    description: 'Encrypt and decrypt messages with AES symmetric or RSA asymmetric encryption. Generate key pairs on the fly.',
+    icon: '\u{1F511}',
+    accent: '#a78bfa',
   },
   {
     title: 'Base Converter',
     href: '/tools/base-converter',
-    description: 'Convert numbers between bases 1 through 36. Generate comparison tables for any range.',
+    description: 'Convert numbers between bases 1 through 36. Generate comparison tables for any range of values.',
+    icon: '\u{1F522}',
+    accent: '#34d399',
   },
 ];
 ---
@@ -24,13 +30,15 @@ const tools = [
   <div class="container">
     <div class="page-header">
       <h1>Tools</h1>
-      <p>Interactive utilities for passwords, encryption, and number systems.</p>
+      <p>Interactive utilities for passwords, encryption, and number systems. Everything runs locally in your browser.</p>
     </div>
-    <div class="card-grid">
-      {tools.map((tool) => (
-        <a href={tool.href} class="tool-card card">
+    <div class="tools-grid">
+      {tools.map((tool, i) => (
+        <a href={tool.href} class="tool-card anim-in" style={`--delay: ${0.05 + i * 0.05}s; --card-accent: ${tool.accent}`}>
+          <div class="tool-icon">{tool.icon}</div>
           <h3>{tool.title}</h3>
-          <p class="excerpt">{tool.description}</p>
+          <p>{tool.description}</p>
+          <span class="tool-link">Open tool &rarr;</span>
         </a>
       ))}
     </div>
@@ -38,11 +46,74 @@ const tools = [
 </BaseLayout>
 
 <style>
+  .tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+  .anim-in {
+    animation: fadeUp 0.5s ease both;
+    animation-delay: var(--delay, 0s);
+  }
   .tool-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2rem;
     text-decoration: none;
     color: inherit;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
   }
-  .tool-card:hover h3 {
-    color: var(--accent-hover);
+  .tool-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--card-accent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .tool-card:hover {
+    border-color: color-mix(in srgb, var(--card-accent) 30%, transparent);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px color-mix(in srgb, var(--card-accent) 8%, transparent);
+  }
+  .tool-card:hover::before {
+    opacity: 1;
+  }
+  .tool-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    line-height: 1;
+  }
+  .tool-card h3 {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+  .tool-card p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    flex-grow: 1;
+  }
+  .tool-link {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--card-accent);
+    margin-top: 1.25rem;
+    transition: color 0.2s;
+  }
+  .tool-card:hover .tool-link {
+    color: var(--text);
   }
 </style>

@@ -10,11 +10,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     </div>
 
     <div class="tool-panel">
-      <div class="tool-section prose-compact">
+      <div class="info-banner anim-in" style="--delay: 0.05s">
         <p>We use base 10 (decimal) daily, but computing relies on other bases. <strong>Binary (base 2)</strong> represents the on/off states of circuits. <strong>Octal (base 8)</strong> compacts three binary digits into one. <strong>Hexadecimal (base 16)</strong> represents a full byte in just two characters — more readable and less error-prone than eight binary digits.</p>
       </div>
 
-      <div class="tool-section">
+      <div class="tool-section anim-in" style="--delay: 0.1s">
         <h2>Settings</h2>
         <div class="range-row">
           <div class="field">
@@ -38,7 +38,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         <div class="checkbox-grid" id="baseCheckboxes"></div>
       </div>
 
-      <div class="tool-section table-wrapper">
+      <div class="tool-section table-section anim-in" style="--delay: 0.15s">
         <div id="tableContainer"></div>
       </div>
     </div>
@@ -51,6 +51,25 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     flex-direction: column;
     gap: 1.5rem;
   }
+  .anim-in {
+    animation: fadeUp 0.5s ease both;
+    animation-delay: var(--delay, 0s);
+  }
+  .info-banner {
+    border-left: 3px solid var(--accent);
+    padding: 1.25rem 1.5rem;
+    background: var(--accent-glow);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  }
+  .info-banner p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.7;
+    margin: 0;
+  }
+  .info-banner strong {
+    color: var(--text);
+  }
   .tool-section {
     background: var(--bg-surface);
     border: 1px solid var(--border);
@@ -58,18 +77,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     padding: 1.75rem;
   }
   .tool-section h2 {
-    font-size: 1.15rem;
+    font-family: var(--font-display);
+    font-size: 1.1rem;
     font-weight: 600;
     margin-bottom: 1rem;
-    color: var(--text);
-  }
-  .prose-compact p {
-    color: var(--text-muted);
-    font-size: 0.925rem;
-    line-height: 1.7;
-    margin: 0;
-  }
-  .prose-compact strong {
     color: var(--text);
   }
   .range-row {
@@ -85,10 +96,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     gap: 0.35rem;
   }
   .field label {
-    font-size: 0.8rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
     color: var(--text-dim);
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.06em;
   }
   .field input[type="number"] {
     width: 100px;
@@ -97,7 +109,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     border-radius: var(--radius-sm);
     color: var(--text);
     padding: 0.6rem 0.85rem;
-    font-size: 0.9rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
   }
   .quick-select {
     display: flex;
@@ -111,6 +124,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     border-radius: var(--radius-sm);
     color: var(--text-muted);
     padding: 0.4rem 0.85rem;
+    font-family: var(--font-body);
     font-size: 0.8rem;
     cursor: pointer;
     transition: all 0.2s;
@@ -118,6 +132,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   .qs-btn:hover {
     border-color: var(--accent);
     color: var(--accent-hover);
+  }
+  .qs-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-glow);
   }
   .checkbox-grid {
     display: flex;
@@ -128,104 +147,123 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     display: flex;
     align-items: center;
     gap: 0.3rem;
-    font-size: 0.8rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
     color: var(--text-muted);
     background: var(--bg-primary);
     border: 1px solid var(--border);
     border-radius: 4px;
-    padding: 0.3rem 0.55rem;
+    padding: 0.25rem 0.5rem;
     cursor: pointer;
     transition: all 0.15s;
     user-select: none;
   }
   .checkbox-grid label:has(input:checked) {
     border-color: var(--accent);
-    color: var(--accent-hover);
+    color: var(--accent);
     background: var(--accent-glow);
   }
   .checkbox-grid input {
     display: none;
   }
-  .table-wrapper {
+  .table-section {
+    padding: 0;
     overflow-x: auto;
-    padding: 1rem;
   }
-  .table-wrapper table {
+  .table-section table {
     border-collapse: collapse;
     width: 100%;
-    font-size: 0.85rem;
-    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.82rem;
+    font-family: var(--font-mono);
   }
-  .table-wrapper th,
-  .table-wrapper td {
-    padding: 0.45rem 0.65rem;
+  .table-section th,
+  .table-section td {
+    padding: 0.4rem 0.6rem;
     text-align: center;
-    border: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    border-right: 1px solid rgba(22, 27, 46, 0.5);
     white-space: nowrap;
   }
-  .table-wrapper th {
+  .table-section th:last-child,
+  .table-section td:last-child {
+    border-right: none;
+  }
+  .table-section th {
     background: var(--bg-surface-hover);
     color: var(--text);
     font-weight: 600;
     position: sticky;
     top: 0;
     z-index: 1;
+    padding: 0.6rem;
   }
-  .table-wrapper td {
+  .table-section td {
     color: var(--text-muted);
   }
-  .table-wrapper td.val-col {
-    color: var(--accent-hover);
+  .table-section tr:nth-child(even) td {
+    background: rgba(255, 255, 255, 0.015);
+  }
+  .table-section td.val-col {
+    color: var(--accent);
     font-weight: 600;
     background: var(--accent-glow);
   }
-  .table-wrapper tr:hover td {
+  .table-section tr:hover td {
     background: var(--bg-surface-hover);
   }
-  .table-wrapper tr:hover td.val-col {
-    background: var(--accent-glow);
+  .table-section tr:hover td.val-col {
+    background: var(--accent-glow-strong);
   }
 </style>
 
 <script is:inline>
-  const DEFAULT_CHECKED = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16];
+  var DEFAULT_CHECKED = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16];
 
-  // Generate checkboxes
-  const checkboxContainer = document.getElementById('baseCheckboxes');
-  for (let i = 1; i <= 36; i++) {
-    const label = document.createElement('label');
-    const cb = document.createElement('input');
+  var checkboxContainer = document.getElementById('baseCheckboxes');
+  for (var i = 1; i <= 36; i++) {
+    var label = document.createElement('label');
+    var cb = document.createElement('input');
     cb.type = 'checkbox';
     cb.value = i;
     cb.id = 'base' + i;
-    if (DEFAULT_CHECKED.includes(i)) cb.checked = true;
+    if (DEFAULT_CHECKED.indexOf(i) !== -1) cb.checked = true;
     label.appendChild(cb);
     label.appendChild(document.createTextNode('B' + i));
     checkboxContainer.appendChild(label);
   }
 
-  // Quick select
-  document.querySelectorAll('.qs-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const val = btn.dataset.bases;
-      const cbs = checkboxContainer.querySelectorAll('input');
+  // Quick select with active state
+  var qsBtns = document.querySelectorAll('.qs-btn');
+  qsBtns.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var val = btn.dataset.bases;
+      var cbs = checkboxContainer.querySelectorAll('input');
+
+      // Clear active from all qs buttons
+      qsBtns.forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+
       if (val === 'all') {
-        cbs.forEach(cb => cb.checked = true);
+        cbs.forEach(function(cb) { cb.checked = true; });
       } else if (val === 'none') {
-        cbs.forEach(cb => cb.checked = false);
+        cbs.forEach(function(cb) { cb.checked = false; });
       } else {
-        const bases = val.split(',').map(Number);
-        cbs.forEach(cb => cb.checked = bases.includes(parseInt(cb.value)));
+        var bases = val.split(',').map(Number);
+        cbs.forEach(function(cb) { cb.checked = bases.indexOf(parseInt(cb.value)) !== -1; });
       }
     });
   });
 
-  // Base conversion
+  // Clear qs active state when user manually toggles a checkbox
+  checkboxContainer.addEventListener('change', function() {
+    qsBtns.forEach(function(b) { b.classList.remove('active'); });
+  });
+
   function toBase(n, b) {
-    const digits = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    if (b === 1) return '0'.repeat(n + 1);
+    var digits = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    if (b === 1) return Array(n + 2).join('0');
     if (n === 0) return '0';
-    let res = '';
+    var res = '';
     while (n > 0) {
       res = digits[n % b] + res;
       n = Math.floor(n / b);
@@ -234,24 +272,24 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   }
 
   function generateTable() {
-    const min = parseInt(document.getElementById('minValue').value) || 0;
-    const max = parseInt(document.getElementById('maxValue').value) || 16;
-    const selected = Array.from(checkboxContainer.querySelectorAll('input:checked'))
-      .map(cb => parseInt(cb.value))
-      .sort((a, b) => a - b);
+    var min = parseInt(document.getElementById('minValue').value) || 0;
+    var max = parseInt(document.getElementById('maxValue').value) || 16;
+    var selected = Array.from(checkboxContainer.querySelectorAll('input:checked'))
+      .map(function(cb) { return parseInt(cb.value); })
+      .sort(function(a, b) { return a - b; });
 
     if (selected.length === 0) {
-      document.getElementById('tableContainer').innerHTML = '<p style="color: var(--text-dim)">Select at least one base.</p>';
+      document.getElementById('tableContainer').innerHTML = '<p style="color: var(--text-dim); padding: 1.75rem;">Select at least one base.</p>';
       return;
     }
 
-    let html = '<table><thead><tr><th>Value</th>';
-    selected.forEach(b => html += '<th>Base ' + b + '</th>');
+    var html = '<table><thead><tr><th>Value</th>';
+    selected.forEach(function(b) { html += '<th>Base ' + b + '</th>'; });
     html += '</tr></thead><tbody>';
 
-    for (let v = min; v <= max; v++) {
+    for (var v = min; v <= max; v++) {
       html += '<tr><td class="val-col">' + v + '</td>';
-      selected.forEach(b => html += '<td>' + toBase(v, b) + '</td>');
+      selected.forEach(function(b) { html += '<td>' + toBase(v, b) + '</td>'; });
       html += '</tr>';
     }
     html += '</tbody></table>';
