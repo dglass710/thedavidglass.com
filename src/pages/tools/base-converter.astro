@@ -28,7 +28,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         <div class="rows-control">
           <label for="rowSlider">Rows</label>
           <input type="range" id="rowSlider" min="4" max="256" value="16" />
-          <span class="row-count" id="rowCount">16</span>
+          <input type="text" class="row-input" id="rowCount" value="16" inputmode="numeric" />
         </div>
       </div>
 
@@ -95,15 +95,40 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       }
 
       var rowSlider = document.getElementById('rowSlider');
-      var rowCount = document.getElementById('rowCount');
+      var rowInput = document.getElementById('rowCount');
+      var lastValidMax = 16;
+
       rowSlider.addEventListener('input', function() {
-        rowCount.textContent = this.value;
+        lastValidMax = parseInt(this.value);
+        rowInput.value = lastValidMax;
         generateTable();
+      });
+
+      rowInput.addEventListener('input', function() {
+        this.value = this.value.replace(/[^0-9]/g, '');
+      });
+
+      rowInput.addEventListener('change', function() {
+        var val = parseInt(this.value);
+        if (isNaN(val) || val < 0) {
+          this.value = lastValidMax;
+          return;
+        }
+        if (val > 256) val = 256;
+        if (val < 4) val = 4;
+        lastValidMax = val;
+        this.value = val;
+        rowSlider.value = val;
+        generateTable();
+      });
+
+      rowInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') this.blur();
       });
 
       function generateTable() {
         var min = 0;
-        var max = parseInt(rowSlider.value);
+        var max = lastValidMax;
         var selected = Array.from(baseContainer.querySelectorAll('.base-btn.on'))
           .map(function(b) { return parseInt(b.dataset.base); })
           .sort(function(a, b) { return a - b; });
@@ -249,13 +274,21 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     border: 2px solid var(--bg-primary);
     box-shadow: 0 0 8px var(--accent-glow-strong);
   }
-  .row-count {
+  .row-input {
     font-family: var(--font-mono);
     font-size: 0.8rem;
     color: var(--accent);
-    min-width: 4.5rem;
-    text-align: right;
-    white-space: nowrap;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.3rem 0.4rem;
+    width: 3.5rem;
+    text-align: center;
+    transition: border-color 0.2s;
+  }
+  .row-input:focus {
+    border-color: var(--accent);
+    outline: none;
   }
   #baseButtons :global(.base-btn) {
     font-family: var(--font-mono);
