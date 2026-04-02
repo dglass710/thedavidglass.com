@@ -20,21 +20,21 @@ Manually editing a resume for each job application is tedious and error-prone. C
 
 ## Architecture
 
-The application has four main components:
+The app has four components, each handling a distinct concern:
 
-- **ResumeBuilder.py** — An 1,800-line Tkinter GUI with drag-and-drop reordering for every section. Users can edit personal info, objectives, education, experience, projects, certifications, and competencies through structured editors. The GUI persists state to a JSON file in the user's Documents folder, keeping data separate from the application bundle.
+- **GUI (ResumeBuilder.py)** — Provides a Tkinter interface with drag-and-drop reordering for every section. Users can edit resume content through structured editors, and the GUI persists state to JSON in the user's Documents folder, keeping data separate from the application bundle.
 
-- **generator.py** — A document engine using python-docx that outputs Harvard-template formatted .docx files. It automatically detects and hyperlinks emails, phone numbers, and URLs in the content. Formatting is consistent: Times New Roman 11pt, 0.5-inch margins, two-column date/title layouts for experience entries.
+- **Document engine (generator.py)** — Outputs Harvard-template formatted .docx files using python-docx. It automatically detects and hyperlinks emails, phone numbers, and URLs in the content.
 
-- **ai_selector.py** — The selection logic, shared between the GUI and CLI. It calls OpenRouter's API in two stages: first to select which items are most relevant to a given job posting, then to reorder the selected items by relevance. Temperature is set to 0.2 for deterministic results. The module includes retry logic with three attempts, JSON validation, and markdown fence stripping for model responses that wrap JSON in code blocks.
+- **Selection logic (ai_selector.py)** — Shared between the GUI and CLI, this module calls OpenRouter's API in two stages: first to select the most relevant items for a given job posting, then to reorder them by relevance. I set temperature to 0.2 for deterministic results and built in retry logic with JSON validation.
 
-- **resume_cli.py** — A command-line tool for generating tailored resumes without opening the GUI. Takes an output path, job posting text, and optional model override.
+- **CLI tool (resume_cli.py)** — Generates tailored resumes from the command line without opening the GUI.
 
 ## AI Selection Pipeline
 
-The AI's role is narrow and well-defined. Given a job posting, it receives the full list of my pre-written content and returns indices — nothing more.
+The AI's role is narrow.
 
-**Stage 1 — Selection:** The model chooses one objective (from several pre-written options), two to four technical projects, and all relevant core competencies. The prompt provides numbered lists and expects a JSON response with index arrays. Validation rejects responses that select too many or too few items.
+**Stage 1 — Selection:** The model chooses one objective (from several pre-written options), two to four technical projects, and all relevant core competencies. The prompt provides numbered lists and expects a JSON response with index arrays. I validate that responses don't select too many or too few items.
 
 **Stage 2 — Reordering:** The selected items are sent back to the model with instructions to reorder by relevance to the job posting. The model returns permuted index arrays. Validation confirms every original index is present — no additions, no deletions, just reordering. If reordering fails after three attempts, the original order is preserved.
 
@@ -42,9 +42,7 @@ Both stages use the same model (defaulting to Claude) via OpenRouter, which mean
 
 ## Data Management
 
-Resume content is stored as JSON with a specific schema. Each section has a title, content array, and UI metadata (window dimensions, font size). Content types vary by section — string arrays for competencies and certifications, nested arrays for education, dictionaries with subtitle/date/details for professional experience.
-
-The application maintains three data layers:
+The app uses three levels of stored data:
 
 1. **default_data.json** — A clean template bundled with the app, used for resets
 2. **data.json** — The user's working data, persisted between sessions
@@ -54,12 +52,14 @@ When running as a bundled executable (via PyInstaller), the app reads from and w
 
 ## Cross-Platform Build
 
-A single build script detects the operating system and invokes PyInstaller with the appropriate configuration — creating a .app bundle on macOS or a .exe on Windows. The script handles icon embedding, data file bundling, and post-build cleanup. On macOS, it optionally installs the built application to /Applications and generates SHA-256 checksums for verification.
+A single build script detects the operating system and invokes PyInstaller with the appropriate configuration — creating a .app bundle on macOS or a .exe on Windows. The script handles icon embedding, data file bundling, and post-build cleanup. On macOS, it optionally installs the built application to /Applications.
 
-## What I'd Improve
+## Results
 
-The GUI works but Tkinter shows its age — particularly with drag-and-drop, which required custom event binding for reorder operations that would be trivial in a modern framework. If I rebuilt this, I'd use Electron or Tauri for the frontend, keeping the Python backend for document generation and AI integration.
+With the build producing standalone executables, the tool is self-contained and ready to use on any machine. I've used it to generate tailored resumes for over 40 job applications. What used to take me 25–30 minutes of manual editing per application now takes under 5 — paste the job posting, review the AI's selections, adjust if needed, and export. The content is always mine, written once and reused accurately, which keeps quality consistent even when I'm submitting multiple applications in a week.
 
-The AI selection could also benefit from few-shot examples in the prompt. Currently it works well with Claude but I've seen inconsistent JSON formatting from some smaller models on OpenRouter, despite the structured output instructions.
+## What I'd Change
+
+I'd swap Tkinter for Electron or Tauri — drag-and-drop required custom event binding that would be trivial in a modern framework. The AI selection could also benefit from few-shot examples in the prompt. It works well with Claude, but some smaller models on OpenRouter return inconsistent JSON formatting despite the structured output instructions.
 
 Source code: [github.com/dglass710/resume-generator](https://github.com/dglass710/resume-generator)

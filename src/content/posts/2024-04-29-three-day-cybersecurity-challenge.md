@@ -8,7 +8,7 @@ categories: ["projects"]
 
 ## Project Overview
 
-An intensive three-day penetration testing challenge across web applications, Linux containers, and Windows systems. Each day targeted a different environment with escalating complexity.
+I completed a three-day penetration testing challenge spanning web applications, Linux containers, and Windows systems. Each day, I targeted a different environment, with complexity escalating across all three.
 
 ---
 
@@ -16,10 +16,10 @@ An intensive three-day penetration testing challenge across web applications, Li
 
 I started with a web application known for layered vulnerabilities. The goal was to exploit as many security flaws as possible.
 
-- **XSS Reflected:** I crafted payloads that split the word "script" into parts to bypass input sanitization and execute malicious scripts.
-- **Local File Inclusion (LFI):** I exploited weak file handling in forms to execute server-side scripts and access the server's filesystem.
+- **XSS Reflected:** I crafted payloads that split the word "script" into parts to bypass input sanitization.
+- **Local File Inclusion (LFI):** I exploited an unvalidated file include parameter in a form to execute server-side scripts and access the server's filesystem.
 - **SQL Injection:** I injected SQL queries through the login form to bypass authentication.
-- **Sensitive Data Exposure:** I found sensitive data leaked through HTTP response headers and HTML content, which opened further attack vectors.
+- **Sensitive Data Exposure:** HTTP response headers and HTML source exposed sensitive data, including server version strings and internal paths.
 - **Command Injection:** I executed server-side commands through vulnerable application inputs.
 
 ## Flags Captured
@@ -34,17 +34,17 @@ I started with a web application known for layered vulnerabilities. The goal was
 
 ## Day 2: Attacking Linux Containers
 
-I shifted focus to Linux servers hosting various services, using OSINT, network scanning, and known CVE exploits.
+I shifted focus to Linux servers hosting Apache Tomcat, Struts, and CGI services, using OSINT, network scanning, and known CVE exploits.
 
-- **Open Source Data Exposure:** I pulled sensitive data from publicly accessible records that led to further access points.
+- **Open Source Data Exposure:** I pulled sensitive data from WHOIS records, DNS TXT entries, and SSL certificate details that led to further access points.
 - **CVE Exploitation:** I used Metasploit to exploit Apache Tomcat's CVE-2017-12617 and Shellshock in CGI scripts.
-- **Service Enumeration:** I identified critical services through port scanning, exploited them to gain access, and escalated privileges.
+- **Service Enumeration:** I used Nmap to identify exposed services and then escalated privileges through misconfigured SUID binaries.
 
 ## Flags Captured
 
 - Flags from WHOIS data, DNS TXT records, and SSL/TLS certificates
 - Multiple flags from exploiting Apache Struts and Tomcat vulnerabilities
-- Additional flags from service exploitation and network scanning
+- Flags from exploiting misconfigured SUID binaries for privilege escalation
 
 ---
 

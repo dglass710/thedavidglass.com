@@ -1,0 +1,982 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Neural Drive | David Glass">
+  <div class="container">
+    <div class="page-header">
+      <h1>Neural Drive</h1>
+      <p>Watch neural networks learn to navigate traffic through evolution — or take the wheel yourself.</p>
+    </div>
+
+    <div class="tool-panel">
+      <div class="info-banner anim-in" style="--delay: 0.05s">
+        <p>Each car has <strong>7 sensor rays</strong> feeding into a neural network that outputs steering and throttle decisions. The best performer's brain survives each generation, gets <strong>mutated</strong>, and seeds the next population. Save a trained brain to localStorage and watch it improve across sessions.</p>
+      </div>
+
+      <div class="tool-section controls-section anim-in" style="--delay: 0.1s">
+        <div class="controls-row">
+          <div class="control-group">
+            <label class="control-label">Mode</label>
+            <div class="toggle-group" id="modeGroup">
+              <button class="tog-btn on" data-value="AI">AI</button>
+              <button class="tog-btn" data-value="KEYS">Drive</button>
+            </div>
+          </div>
+          <div class="control-group" id="popGroup">
+            <label class="control-label">Population</label>
+            <div class="toggle-group" id="popButtons">
+              <button class="tog-btn" data-value="1">1</button>
+              <button class="tog-btn" data-value="10">10</button>
+              <button class="tog-btn" data-value="50">50</button>
+              <button class="tog-btn on" data-value="100">100</button>
+              <button class="tog-btn" data-value="200">200</button>
+              <button class="tog-btn" data-value="500">500</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="controls-row" id="mutationRow">
+          <div class="control-group mutation-group">
+            <label class="control-label">Mutation</label>
+            <div class="slider-row">
+              <input type="range" id="mutationSlider" min="1" max="50" value="10" />
+              <span class="slider-val" id="mutationVal">10%</span>
+            </div>
+          </div>
+          <div class="control-group actions-group">
+            <label class="control-label">Actions</label>
+            <div class="action-row">
+              <button class="act-btn" id="saveBtn" title="Save best brain to localStorage">Save Brain</button>
+              <button class="act-btn" id="discardBtn" title="Delete saved brain from localStorage">Discard</button>
+              <button class="act-btn accent" id="restartBtn" title="Restart simulation">Restart</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="status-bar" id="statusBar">
+          <span class="status-item" id="statusAlive">Alive: —</span>
+          <span class="status-item" id="statusDist">Distance: —</span>
+          <span class="status-item" id="statusGen">Gen: 1</span>
+          <span class="status-item keys-hint" id="keysHint">Arrow keys to drive</span>
+        </div>
+      </div>
+
+      <div class="sim-container anim-in" style="--delay: 0.15s">
+        <div class="canvas-col road-col">
+          <canvas id="carCanvas"></canvas>
+        </div>
+        <div class="canvas-col network-col">
+          <div class="net-label">Neural Network</div>
+          <canvas id="networkCanvas"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <script is:inline>
+    /* ═══════════════════════════════════════════
+       UTILITY FUNCTIONS
+       ═══════════════════════════════════════════ */
+    function lerp(A,B,t){ return A+(B-A)*t; }
+
+    function getIntersection(A,B,C,D){
+      var tTop=(D.x-C.x)*(A.y-C.y)-(D.y-C.y)*(A.x-C.x);
+      var uTop=(C.y-A.y)*(A.x-B.x)-(C.x-A.x)*(A.y-B.y);
+      var bottom=(D.y-C.y)*(B.x-A.x)-(D.x-C.x)*(B.y-A.y);
+      if(bottom!=0){
+        var t=tTop/bottom;
+        var u=uTop/bottom;
+        if(t>=0 && t<=1 && u>=0 && u<=1){
+          return {x:lerp(A.x,B.x,t),y:lerp(A.y,B.y,t),offset:t};
+        }
+      }
+      return null;
+    }
+
+    function polysIntersect(poly1,poly2){
+      for(var i=0;i<poly1.length;i++){
+        for(var j=0;j<poly2.length;j++){
+          var touch=getIntersection(
+            poly1[i],poly1[(i+1)%poly1.length],
+            poly2[j],poly2[(j+1)%poly2.length]
+          );
+          if(touch) return true;
+        }
+      }
+      return false;
+    }
+
+    function getRGBA(value){
+      var alpha=Math.abs(value);
+      if(value>0) return "rgba(34,211,238,"+alpha+")";
+      return "rgba(244,63,94,"+alpha+")";
+    }
+
+    function getRandomColor(){
+      var ranges=[[170,210],[240,300]];
+      var r=ranges[Math.floor(Math.random()*ranges.length)];
+      var hue=r[0]+Math.random()*(r[1]-r[0]);
+      return "hsl("+hue+",80%,65%)";
+    }
+
+    /* ═══════════════════════════════════════════
+       CONTROLS CLASS
+       ═══════════════════════════════════════════ */
+    var Controls = (function(){
+      function Controls(type){
+        this.forward=false;
+        this.left=false;
+        this.right=false;
+        this.reverse=false;
+        if(type==="KEYS") this._addKeyboardListeners();
+        else if(type==="DUMMY") this.forward=true;
+      }
+      Controls.prototype._addKeyboardListeners=function(){
+        var self=this;
+        document.addEventListener("keydown",function(e){
+          switch(e.key){
+            case "ArrowLeft": self.left=true; e.preventDefault(); break;
+            case "ArrowRight": self.right=true; e.preventDefault(); break;
+            case "ArrowUp": self.forward=true; e.preventDefault(); break;
+            case "ArrowDown": self.reverse=true; e.preventDefault(); break;
+          }
+        });
+        document.addEventListener("keyup",function(e){
+          switch(e.key){
+            case "ArrowLeft": self.left=false; break;
+            case "ArrowRight": self.right=false; break;
+            case "ArrowUp": self.forward=false; break;
+            case "ArrowDown": self.reverse=false; break;
+          }
+        });
+      };
+      return Controls;
+    })();
+
+    /* ═══════════════════════════════════════════
+       NEURAL NETWORK
+       ═══════════════════════════════════════════ */
+    var Level = (function(){
+      function Level(inputCount,outputCount){
+        this.inputs=new Array(inputCount);
+        this.outputs=new Array(outputCount);
+        this.biases=new Array(outputCount);
+        this.weights=[];
+        for(var i=0;i<inputCount;i++) this.weights[i]=new Array(outputCount);
+        Level.randomize(this);
+      }
+      Level.randomize=function(level){
+        for(var i=0;i<level.inputs.length;i++)
+          for(var j=0;j<level.outputs.length;j++)
+            level.weights[i][j]=Math.random()*2-1;
+        for(var i=0;i<level.biases.length;i++)
+          level.biases[i]=Math.random()*2-1;
+      };
+      Level.feedForward=function(givenInputs,level){
+        for(var i=0;i<level.inputs.length;i++) level.inputs[i]=givenInputs[i];
+        for(var i=0;i<level.outputs.length;i++){
+          var sum=0;
+          for(var j=0;j<level.inputs.length;j++) sum+=level.inputs[j]*level.weights[j][i];
+          level.outputs[i]=sum>level.biases[i]?1:0;
+        }
+        return level.outputs;
+      };
+      return Level;
+    })();
+
+    var NeuralNetwork = (function(){
+      function NeuralNetwork(neuronCounts){
+        this.levels=[];
+        for(var i=0;i<neuronCounts.length-1;i++)
+          this.levels.push(new Level(neuronCounts[i],neuronCounts[i+1]));
+      }
+      NeuralNetwork.feedForward=function(givenInputs,network){
+        var outputs=Level.feedForward(givenInputs,network.levels[0]);
+        for(var i=1;i<network.levels.length;i++)
+          outputs=Level.feedForward(outputs,network.levels[i]);
+        return outputs;
+      };
+      NeuralNetwork.mutate=function(network,amount){
+        if(typeof amount==="undefined") amount=1;
+        network.levels.forEach(function(level){
+          for(var i=0;i<level.biases.length;i++)
+            level.biases[i]=lerp(level.biases[i],Math.random()*2-1,amount);
+          for(var i=0;i<level.weights.length;i++)
+            for(var j=0;j<level.weights[i].length;j++)
+              level.weights[i][j]=lerp(level.weights[i][j],Math.random()*2-1,amount);
+        });
+      };
+      return NeuralNetwork;
+    })();
+
+    /* ═══════════════════════════════════════════
+       SENSOR
+       ═══════════════════════════════════════════ */
+    var Sensor = (function(){
+      function Sensor(car){
+        this.car=car;
+        this.rayCount=7;
+        this.rayLength=150;
+        this.raySpread=Math.PI*3/4;
+        this.rays=[];
+        this.readings=[];
+      }
+      Sensor.prototype.update=function(roadBorders,traffic){
+        this._castRays();
+        this.readings=[];
+        for(var i=0;i<this.rays.length;i++)
+          this.readings.push(this._getReading(this.rays[i],roadBorders,traffic));
+      };
+      Sensor.prototype._getReading=function(ray,roadBorders,traffic){
+        var touches=[];
+        for(var i=0;i<roadBorders.length;i++){
+          var touch=getIntersection(ray[0],ray[1],roadBorders[i][0],roadBorders[i][1]);
+          if(touch) touches.push(touch);
+        }
+        for(var i=0;i<traffic.length;i++){
+          var poly=traffic[i].polygon;
+          for(var j=0;j<poly.length;j++){
+            var value=getIntersection(ray[0],ray[1],poly[j],poly[(j+1)%poly.length]);
+            if(value) touches.push(value);
+          }
+        }
+        if(touches.length===0) return null;
+        var offsets=touches.map(function(e){return e.offset;});
+        var minOffset=Math.min.apply(null,offsets);
+        return touches.find(function(e){return e.offset===minOffset;});
+      };
+      Sensor.prototype._castRays=function(){
+        this.rays=[];
+        for(var i=0;i<this.rayCount;i++){
+          var rayAngle=lerp(
+            this.raySpread/2,-this.raySpread/2,
+            this.rayCount===1?0.5:i/(this.rayCount-1)
+          )+this.car.angle;
+          var start={x:this.car.x,y:this.car.y};
+          var end={
+            x:this.car.x-Math.sin(rayAngle)*this.rayLength,
+            y:this.car.y-Math.cos(rayAngle)*this.rayLength
+          };
+          this.rays.push([start,end]);
+        }
+      };
+      Sensor.prototype.draw=function(ctx){
+        for(var i=0;i<this.rayCount;i++){
+          var end=this.rays[i][1];
+          if(this.readings[i]) end=this.readings[i];
+          ctx.beginPath();
+          ctx.lineWidth=2;
+          ctx.strokeStyle="#22d3ee";
+          ctx.moveTo(this.rays[i][0].x,this.rays[i][0].y);
+          ctx.lineTo(end.x,end.y);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.lineWidth=2;
+          ctx.strokeStyle="rgba(34,211,238,0.15)";
+          ctx.moveTo(this.rays[i][1].x,this.rays[i][1].y);
+          ctx.lineTo(end.x,end.y);
+          ctx.stroke();
+        }
+      };
+      return Sensor;
+    })();
+
+    /* ═══════════════════════════════════════════
+       ROAD
+       ═══════════════════════════════════════════ */
+    var Road = (function(){
+      function Road(x,width,laneCount){
+        this.x=x;
+        this.width=width;
+        this.laneCount=laneCount||3;
+        this.left=x-width/2;
+        this.right=x+width/2;
+        var inf=1000000;
+        this.top=-inf;
+        this.bottom=inf;
+        this.borders=[
+          [{x:this.left,y:this.top},{x:this.left,y:this.bottom}],
+          [{x:this.right,y:this.top},{x:this.right,y:this.bottom}]
+        ];
+      }
+      Road.prototype.getLaneCenter=function(laneIndex){
+        var laneWidth=this.width/this.laneCount;
+        return this.left+laneWidth/2+Math.min(laneIndex,this.laneCount-1)*laneWidth;
+      };
+      Road.prototype.draw=function(ctx){
+        ctx.fillStyle="#0d0d1a";
+        ctx.fillRect(this.left-12,this.top,this.width+24,this.bottom-this.top);
+        ctx.lineWidth=5;
+        ctx.strokeStyle="rgba(34,211,238,0.12)";
+        for(var i=1;i<=this.laneCount-1;i++){
+          var x=lerp(this.left,this.right,i/this.laneCount);
+          ctx.setLineDash([20,20]);
+          ctx.beginPath();
+          ctx.moveTo(x,this.top);
+          ctx.lineTo(x,this.bottom);
+          ctx.stroke();
+        }
+        ctx.setLineDash([]);
+        ctx.lineWidth=4;
+        ctx.strokeStyle="rgba(34,211,238,0.5)";
+        var self=this;
+        this.borders.forEach(function(border){
+          ctx.beginPath();
+          ctx.moveTo(border[0].x,border[0].y);
+          ctx.lineTo(border[1].x,border[1].y);
+          ctx.stroke();
+        });
+      };
+      return Road;
+    })();
+
+    /* ═══════════════════════════════════════════
+       CAR
+       ═══════════════════════════════════════════ */
+    var Car = (function(){
+      function Car(x,y,width,height,controlType,maxSpeed,color){
+        this.x=x; this.y=y;
+        this.width=width; this.height=height;
+        this.speed=0; this.acceleration=0.2;
+        this.maxSpeed=maxSpeed||3;
+        this.friction=0.05; this.angle=0;
+        this.damaged=false;
+        this.useBrain=controlType==="AI";
+        if(controlType!=="DUMMY"){
+          this.sensor=new Sensor(this);
+          this.brain=new NeuralNetwork([this.sensor.rayCount,6,4]);
+        }
+        this.controls=new Controls(controlType);
+        this.img=new Image();
+        this.img.src="/images/car-sim-sprite.png";
+        this.mask=document.createElement("canvas");
+        this.mask.width=width;
+        this.mask.height=height;
+        var maskCtx=this.mask.getContext("2d");
+        var self=this;
+        this.img.onload=function(){
+          maskCtx.fillStyle=color||"#22d3ee";
+          maskCtx.rect(0,0,self.width,self.height);
+          maskCtx.fill();
+          maskCtx.globalCompositeOperation="destination-atop";
+          maskCtx.drawImage(self.img,0,0,self.width,self.height);
+        };
+      }
+      Car.prototype.update=function(roadBorders,traffic){
+        if(!this.damaged){
+          this._move();
+          this.polygon=this._createPolygon();
+          this.damaged=this._assessDamage(roadBorders,traffic);
+        }
+        if(this.sensor){
+          this.sensor.update(roadBorders,traffic);
+          var offsets=this.sensor.readings.map(function(s){return s==null?0:1-s.offset;});
+          var outputs=NeuralNetwork.feedForward(offsets,this.brain);
+          if(this.useBrain){
+            this.controls.forward=outputs[0];
+            this.controls.left=outputs[1];
+            this.controls.right=outputs[2];
+            this.controls.reverse=outputs[3];
+          }
+        }
+      };
+      Car.prototype._assessDamage=function(roadBorders,traffic){
+        for(var i=0;i<roadBorders.length;i++)
+          if(polysIntersect(this.polygon,roadBorders[i])) return true;
+        for(var i=0;i<traffic.length;i++)
+          if(polysIntersect(this.polygon,traffic[i].polygon)) return true;
+        return false;
+      };
+      Car.prototype._createPolygon=function(){
+        var points=[];
+        var rad=Math.hypot(this.width,this.height)/2;
+        var alpha=Math.atan2(this.width,this.height);
+        points.push({x:this.x-Math.sin(this.angle-alpha)*rad,y:this.y-Math.cos(this.angle-alpha)*rad});
+        points.push({x:this.x-Math.sin(this.angle+alpha)*rad,y:this.y-Math.cos(this.angle+alpha)*rad});
+        points.push({x:this.x-Math.sin(Math.PI+this.angle-alpha)*rad,y:this.y-Math.cos(Math.PI+this.angle-alpha)*rad});
+        points.push({x:this.x-Math.sin(Math.PI+this.angle+alpha)*rad,y:this.y-Math.cos(Math.PI+this.angle+alpha)*rad});
+        return points;
+      };
+      Car.prototype._move=function(){
+        if(this.controls.forward) this.speed+=this.acceleration;
+        if(this.controls.reverse) this.speed-=this.acceleration;
+        if(this.speed>this.maxSpeed) this.speed=this.maxSpeed;
+        if(this.speed<-this.maxSpeed/2) this.speed=-this.maxSpeed/2;
+        if(this.speed>0) this.speed-=this.friction;
+        if(this.speed<0) this.speed+=this.friction;
+        if(Math.abs(this.speed)<this.friction) this.speed=0;
+        if(this.speed!==0){
+          var flip=this.speed>0?1:-1;
+          if(this.controls.left) this.angle+=0.03*flip;
+          if(this.controls.right) this.angle-=0.03*flip;
+        }
+        this.x-=Math.sin(this.angle)*this.speed;
+        this.y-=Math.cos(this.angle)*this.speed;
+      };
+      Car.prototype.draw=function(ctx,drawSensor){
+        if(this.sensor && drawSensor) this.sensor.draw(ctx);
+        ctx.save();
+        ctx.translate(this.x,this.y);
+        ctx.rotate(-this.angle);
+        if(!this.damaged){
+          ctx.drawImage(this.mask,-this.width/2,-this.height/2,this.width,this.height);
+          ctx.globalCompositeOperation="multiply";
+        }
+        ctx.drawImage(this.img,-this.width/2,-this.height/2,this.width,this.height);
+        ctx.restore();
+      };
+      return Car;
+    })();
+
+    /* ═══════════════════════════════════════════
+       VISUALIZER
+       ═══════════════════════════════════════════ */
+    var Visualizer = {
+      drawNetwork: function(ctx,network){
+        var margin=50;
+        var left=margin,top=margin;
+        var width=ctx.canvas.width-margin*2;
+        var height=ctx.canvas.height-margin*2;
+        var levelHeight=height/network.levels.length;
+        for(var i=network.levels.length-1;i>=0;i--){
+          var levelTop=top+lerp(
+            height-levelHeight,0,
+            network.levels.length===1?0.5:i/(network.levels.length-1)
+          );
+          ctx.setLineDash([7,3]);
+          Visualizer.drawLevel(ctx,network.levels[i],
+            left,levelTop,width,levelHeight,
+            i===network.levels.length-1?['\u2B06','\u2B05','\u27A1','\u2B07']:[]
+          );
+        }
+      },
+      drawLevel: function(ctx,level,left,top,width,height,outputLabels){
+        var right=left+width;
+        var bottom=top+height;
+        var inputs=level.inputs,outputs=level.outputs,weights=level.weights,biases=level.biases;
+        for(var i=0;i<inputs.length;i++){
+          for(var j=0;j<outputs.length;j++){
+            ctx.beginPath();
+            ctx.moveTo(Visualizer._getNodeX(inputs,i,left,right),bottom);
+            ctx.lineTo(Visualizer._getNodeX(outputs,j,left,right),top);
+            ctx.lineWidth=2;
+            ctx.strokeStyle=getRGBA(weights[i][j]);
+            ctx.stroke();
+          }
+        }
+        var nodeRadius=18;
+        for(var i=0;i<inputs.length;i++){
+          var x=Visualizer._getNodeX(inputs,i,left,right);
+          ctx.beginPath();ctx.arc(x,bottom,nodeRadius,0,Math.PI*2);
+          ctx.fillStyle="#0c0c18";ctx.fill();
+          ctx.beginPath();ctx.arc(x,bottom,nodeRadius*0.6,0,Math.PI*2);
+          ctx.fillStyle=getRGBA(inputs[i]);ctx.fill();
+        }
+        for(var i=0;i<outputs.length;i++){
+          var x=Visualizer._getNodeX(outputs,i,left,right);
+          ctx.beginPath();ctx.arc(x,top,nodeRadius,0,Math.PI*2);
+          ctx.fillStyle="#0c0c18";ctx.fill();
+          ctx.beginPath();ctx.arc(x,top,nodeRadius*0.6,0,Math.PI*2);
+          ctx.fillStyle=getRGBA(outputs[i]);ctx.fill();
+          ctx.beginPath();ctx.lineWidth=2;
+          ctx.arc(x,top,nodeRadius*0.8,0,Math.PI*2);
+          ctx.strokeStyle=getRGBA(biases[i]);
+          ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([]);
+          if(outputLabels[i]){
+            ctx.beginPath();ctx.textAlign="center";ctx.textBaseline="middle";
+            ctx.fillStyle="#0c0c18";ctx.strokeStyle="#e2e8f0";
+            ctx.font=(nodeRadius*1.5)+"px Arial";
+            ctx.fillText(outputLabels[i],x,top+nodeRadius*0.1);
+            ctx.lineWidth=0.5;
+            ctx.strokeText(outputLabels[i],x,top+nodeRadius*0.1);
+          }
+        }
+      },
+      _getNodeX: function(nodes,index,left,right){
+        return lerp(left,right,nodes.length===1?0.5:index/(nodes.length-1));
+      }
+    };
+
+    /* ═══════════════════════════════════════════
+       SIMULATION STATE & CONTROL
+       ═══════════════════════════════════════════ */
+    var carCanvas=document.getElementById("carCanvas");
+    var networkCanvas=document.getElementById("networkCanvas");
+    var carCtx=carCanvas.getContext("2d");
+    var networkCtx=networkCanvas.getContext("2d");
+
+    var simState={
+      mode:"AI",
+      carCount:100,
+      mutation:0.1,
+      generation:1,
+      animId:null,
+      road:null,
+      cars:[],
+      bestCar:null,
+      traffic:[]
+    };
+
+    function generateTraffic(road){
+      return [
+        new Car(road.getLaneCenter(1),-100,30,50,"DUMMY",2,getRandomColor()),
+        new Car(road.getLaneCenter(0),-300,30,50,"DUMMY",2,getRandomColor()),
+        new Car(road.getLaneCenter(2),-300,30,50,"DUMMY",2,getRandomColor()),
+        new Car(road.getLaneCenter(0),-500,30,50,"DUMMY",2,getRandomColor()),
+        new Car(road.getLaneCenter(1),-500,30,50,"DUMMY",2,getRandomColor()),
+        new Car(road.getLaneCenter(1),-700,30,50,"DUMMY",2,getRandomColor()),
+        new Car(road.getLaneCenter(2),-700,30,50,"DUMMY",2,getRandomColor()),
+        new Car(road.getLaneCenter(0),-900,30,50,"DUMMY",2,getRandomColor()),
+        new Car(road.getLaneCenter(1),-900,30,50,"DUMMY",2,getRandomColor()),
+        new Car(road.getLaneCenter(1),-1100,30,50,"DUMMY",2,getRandomColor()),
+        new Car(road.getLaneCenter(2),-1100,30,50,"DUMMY",2,getRandomColor()),
+        new Car(road.getLaneCenter(0),-1300,30,50,"DUMMY",2,getRandomColor()),
+        new Car(road.getLaneCenter(1),-1300,30,50,"DUMMY",2,getRandomColor()),
+        new Car(road.getLaneCenter(2),-1300,30,50,"DUMMY",2,getRandomColor()),
+        new Car(road.getLaneCenter(0),-1400,30,50,"DUMMY",2,getRandomColor()),
+        new Car(road.getLaneCenter(1),-1400,30,50,"DUMMY",2,getRandomColor()),
+        new Car(road.getLaneCenter(2),-1400,30,50,"DUMMY",2,getRandomColor()),
+        new Car(road.getLaneCenter(0),-1500,30,50,"DUMMY",2,getRandomColor()),
+        new Car(road.getLaneCenter(1),-1500,30,50,"DUMMY",2,getRandomColor()),
+        new Car(road.getLaneCenter(2),-1500,30,50,"DUMMY",2,getRandomColor()),
+        new Car(road.getLaneCenter(0),-1700,30,50,"DUMMY",2,getRandomColor()),
+        new Car(road.getLaneCenter(1),-1700,30,50,"DUMMY",2,getRandomColor()),
+        new Car(road.getLaneCenter(2),-1700,30,50,"DUMMY",2,getRandomColor()),
+        new Car(road.getLaneCenter(0),-1900,30,50,"DUMMY",2,getRandomColor()),
+        new Car(road.getLaneCenter(1),-1900,30,50,"DUMMY",2,getRandomColor()),
+        new Car(road.getLaneCenter(2),-1900,30,50,"DUMMY",2,getRandomColor()),
+        new Car(road.getLaneCenter(0),-2000,30,50,"DUMMY",2,getRandomColor()),
+        new Car(road.getLaneCenter(2),-2000,30,50,"DUMMY",2,getRandomColor()),
+        new Car(road.getLaneCenter(0),-2100,30,50,"DUMMY",2,getRandomColor()),
+        new Car(road.getLaneCenter(1),-2100,30,50,"DUMMY",2,getRandomColor()),
+        new Car(road.getLaneCenter(2),-2100,30,50,"DUMMY",2,getRandomColor())
+      ];
+    }
+
+    function generateCars(N,mode){
+      var cars=[];
+      var type=mode==="KEYS"?"KEYS":"AI";
+      for(var i=0;i<N;i++) cars.push(new Car(simState.road.getLaneCenter(1),100,30,50,type));
+      return cars;
+    }
+
+    function sizeCanvases(){
+      var roadCol=document.querySelector(".road-col");
+      var netCol=document.querySelector(".network-col");
+      carCanvas.width=Math.floor(roadCol.clientWidth);
+      networkCanvas.width=Math.floor(netCol.clientWidth);
+    }
+
+    function initSim(resetGen){
+      if(simState.animId) cancelAnimationFrame(simState.animId);
+      if(resetGen) simState.generation=1;
+
+      sizeCanvases();
+      simState.road=new Road(carCanvas.width/2,carCanvas.width*0.9);
+
+      var N=simState.mode==="KEYS"?1:simState.carCount;
+      simState.cars=generateCars(N,simState.mode);
+      simState.bestCar=simState.cars[0];
+
+      if(simState.mode==="AI" && localStorage.getItem("bestBrain")){
+        for(var i=0;i<simState.cars.length;i++){
+          simState.cars[i].brain=JSON.parse(localStorage.getItem("bestBrain"));
+          if(i!==0 && N>1) NeuralNetwork.mutate(simState.cars[i].brain,simState.mutation);
+        }
+      }
+
+      simState.traffic=generateTraffic(simState.road);
+      animate();
+    }
+
+    function animate(time){
+      var s=simState;
+      for(var i=0;i<s.traffic.length;i++) s.traffic[i].update(s.road.borders,[]);
+      for(var i=0;i<s.cars.length;i++) s.cars[i].update(s.road.borders,s.traffic);
+
+      s.bestCar=s.cars.reduce(function(best,c){return c.y<best.y?c:best;},s.cars[0]);
+
+      carCanvas.height=carCanvas.parentElement.clientHeight;
+      networkCanvas.height=networkCanvas.parentElement.clientHeight;
+
+      carCtx.save();
+      carCtx.translate(0,-s.bestCar.y+carCanvas.height*0.7);
+
+      s.road.draw(carCtx);
+      for(var i=0;i<s.traffic.length;i++) s.traffic[i].draw(carCtx);
+
+      carCtx.globalAlpha=0.2;
+      for(var i=0;i<s.cars.length;i++) s.cars[i].draw(carCtx);
+      carCtx.globalAlpha=1;
+      s.bestCar.draw(carCtx,true);
+      carCtx.restore();
+
+      networkCtx.lineDashOffset=-time/20;
+      Visualizer.drawNetwork(networkCtx,s.bestCar.brain);
+
+      updateStatus();
+      s.animId=requestAnimationFrame(animate);
+    }
+
+    function updateStatus(){
+      var alive=simState.cars.filter(function(c){return !c.damaged;}).length;
+      var total=simState.cars.length;
+      var dist=Math.round(-simState.bestCar.y+100);
+      document.getElementById("statusAlive").textContent="Alive: "+alive+"/"+total;
+      document.getElementById("statusDist").textContent="Distance: "+dist;
+      document.getElementById("statusGen").textContent="Gen: "+simState.generation;
+    }
+
+    /* ═══════════════════════════════════════════
+       UI WIRING
+       ═══════════════════════════════════════════ */
+    function setupToggleGroup(containerId,callback){
+      var btns=document.querySelectorAll("#"+containerId+" .tog-btn");
+      btns.forEach(function(btn){
+        btn.addEventListener("click",function(){
+          btns.forEach(function(b){b.classList.remove("on");});
+          btn.classList.add("on");
+          callback(btn.dataset.value);
+        });
+      });
+    }
+
+    setupToggleGroup("modeGroup",function(val){
+      simState.mode=val;
+      var isAI=val==="AI";
+      document.getElementById("popGroup").style.display=isAI?"":"none";
+      document.getElementById("mutationRow").style.display=isAI?"":"none";
+      document.getElementById("keysHint").style.display=isAI?"none":"";
+      initSim(true);
+    });
+
+    setupToggleGroup("popButtons",function(val){
+      simState.carCount=parseInt(val);
+      initSim(true);
+    });
+
+    var mutSlider=document.getElementById("mutationSlider");
+    var mutVal=document.getElementById("mutationVal");
+    mutSlider.addEventListener("input",function(){
+      simState.mutation=parseInt(this.value)/100;
+      mutVal.textContent=this.value+"%";
+    });
+
+    document.getElementById("saveBtn").addEventListener("click",function(){
+      localStorage.setItem("bestBrain",JSON.stringify(simState.bestCar.brain));
+      var btn=this;
+      btn.textContent="Saved!";
+      btn.classList.add("saved");
+      setTimeout(function(){btn.textContent="Save Brain";btn.classList.remove("saved");},1200);
+    });
+
+    document.getElementById("discardBtn").addEventListener("click",function(){
+      localStorage.removeItem("bestBrain");
+      var btn=this;
+      btn.textContent="Cleared!";
+      setTimeout(function(){btn.textContent="Discard";},1200);
+    });
+
+    document.getElementById("restartBtn").addEventListener("click",function(){
+      simState.generation++;
+      initSim(false);
+    });
+
+    document.getElementById("keysHint").style.display="none";
+
+    var resizeTimer;
+    window.addEventListener("resize",function(){
+      clearTimeout(resizeTimer);
+      resizeTimer=setTimeout(function(){initSim(false);},250);
+    });
+
+    initSim(true);
+    </script>
+  </div>
+</BaseLayout>
+
+<style>
+  .tool-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .anim-in {
+    animation: fadeUp 0.5s ease both;
+    animation-delay: var(--delay, 0s);
+  }
+  .info-banner {
+    border-left: 3px solid var(--accent);
+    padding: 1.25rem 1.5rem;
+    background: var(--accent-glow);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  }
+  .info-banner p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.7;
+    margin: 0;
+  }
+  .info-banner strong {
+    color: var(--text);
+  }
+
+  /* ── Controls ── */
+  .controls-section {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.75rem;
+  }
+  .controls-row {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+  }
+  .controls-row:last-of-type {
+    margin-bottom: 1rem;
+  }
+  .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .control-label {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .toggle-group {
+    display: flex;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+  }
+
+  .controls-section :global(.tog-btn) {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.35rem 0.7rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+    line-height: 1.2;
+  }
+  .controls-section :global(.tog-btn:hover) {
+    color: var(--text-muted);
+    border-color: var(--text-dim);
+  }
+  .controls-section :global(.tog-btn.on) {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-glow);
+    box-shadow: 0 0 8px var(--accent-glow);
+  }
+
+  /* Mutation slider */
+  .mutation-group {
+    flex: 1;
+    min-width: 160px;
+  }
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .slider-row input[type="range"] {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+  }
+  .slider-row input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid var(--bg-primary);
+    box-shadow: 0 0 8px var(--accent-glow-strong);
+    transition: transform 0.15s;
+  }
+  .slider-row input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+  }
+  .slider-row input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid var(--bg-primary);
+    box-shadow: 0 0 8px var(--accent-glow-strong);
+  }
+  .slider-val {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--accent);
+    min-width: 2.5rem;
+    text-align: right;
+  }
+
+  /* Action buttons */
+  .actions-group {
+    margin-left: auto;
+  }
+  .action-row {
+    display: flex;
+    gap: 0.4rem;
+  }
+  .controls-section :global(.act-btn) {
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.4rem 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .controls-section :global(.act-btn:hover) {
+    border-color: var(--accent);
+    color: var(--accent-hover);
+  }
+  .controls-section :global(.act-btn.accent) {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-glow);
+  }
+  .controls-section :global(.act-btn.accent:hover) {
+    background: var(--accent-glow-strong);
+    box-shadow: 0 0 12px var(--accent-glow);
+  }
+  .controls-section :global(.act-btn.saved) {
+    border-color: #22c55e;
+    color: #22c55e;
+    background: rgba(34, 197, 94, 0.08);
+  }
+
+  /* Status bar */
+  .status-bar {
+    display: flex;
+    gap: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .status-item {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    letter-spacing: 0.02em;
+  }
+  .keys-hint {
+    margin-left: auto;
+    color: var(--accent);
+    opacity: 0.7;
+  }
+
+  /* ── Simulation canvases ── */
+  .sim-container {
+    display: flex;
+    gap: 0;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    height: min(560px, 65vh);
+    box-shadow: 0 4px 40px rgba(34, 211, 238, 0.03), inset 0 1px 0 rgba(255,255,255,0.02);
+  }
+  .canvas-col {
+    position: relative;
+    overflow: hidden;
+  }
+  .road-col {
+    width: 260px;
+    min-width: 200px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+  }
+  .network-col {
+    flex: 1;
+    min-width: 0;
+  }
+  .road-col canvas,
+  .network-col canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  #carCanvas {
+    background: #08080f;
+  }
+  #networkCanvas {
+    background: #08080f;
+  }
+  .net-label {
+    position: absolute;
+    top: 0.75rem;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    opacity: 0.5;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .sim-container {
+      flex-direction: column;
+      height: auto;
+    }
+    .road-col {
+      width: 100%;
+      min-width: 0;
+      height: min(400px, 55vh);
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+    }
+    .network-col {
+      height: 220px;
+    }
+    .controls-row {
+      gap: 1rem;
+    }
+    .actions-group {
+      margin-left: 0;
+    }
+    .status-bar {
+      gap: 1rem;
+    }
+    .keys-hint {
+      margin-left: 0;
+    }
+  }
+  @media (max-width: 480px) {
+    .controls-section {
+      padding: 1.25rem;
+    }
+    .action-row {
+      flex-wrap: wrap;
+    }
+  }
+</style>

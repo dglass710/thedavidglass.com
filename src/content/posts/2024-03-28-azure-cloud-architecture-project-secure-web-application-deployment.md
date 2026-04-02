@@ -8,20 +8,24 @@ categories: ["projects"]
 
 ## Project Overview
 
-I designed and deployed a secure, scalable web application architecture on Microsoft Azure. The setup used a jump box provisioner with Ansible to automate configuration management and deploy Docker containers across multiple web servers.
+I designed and deployed a secure web application architecture on Microsoft Azure. The setup used a jump box provisioner with Ansible to automate configuration management and deploy Docker containers across three web servers.
 
 ## Architecture Details
 
-- **Jump Box Provisioner:** Served as the single entry point for administrative tasks. I configured it to allow SSH access (port 22) only from my home network IP.
+- **Jump Box Provisioner:** Served as the single entry point for administrative tasks and ran Ansible to automate deployment across all three web servers.
 - **Ansible Configuration Management:** I ran Ansible from the jump box to automate deployment and management of web servers running Docker containers. This kept configurations consistent across all servers.
 - **Docker Containers:** Each web server hosted Docker containers running the web application in isolated environments.
-- **Load Balancer:** Sat in front of the web servers to distribute incoming traffic. I configured it to handle ports 80 (HTTP) and 443 (HTTPS) for public access.
-- **Network Security Groups (NSGs):** Controlled inbound and outbound traffic within the Azure network. I configured NSGs to allow only my home network to SSH into the jump box on port 22 and to permit public HTTP/HTTPS traffic through the load balancer.
+- **Load Balancer:** I placed a load balancer in front of the three web servers to distribute incoming traffic on ports 80 and 443, keeping the servers themselves off the public internet with no direct inbound routes.
+- **Network Security Groups (NSGs):** Controlled inbound and outbound traffic within the Azure network. I configured NSGs to allow SSH on port 22 only from my home network IP to the jump box, and to permit public HTTP/HTTPS traffic only through the load balancer.
 
-## Security and Efficiency
+## Security Design
 
-The layered approach — restricted jump box access, isolated Docker containers, and tightly scoped NSG rules — meant that even if one component was compromised, lateral movement was limited. The load balancer provided availability while keeping the web servers themselves out of direct public reach.
+The layered approach — restricted jump box access, isolated Docker containers, and tightly scoped NSG rules — meant that a compromised web server couldn't reach the jump box or other web servers directly. The NSGs blocked all inter-VM SSH traffic except from the jump box, so there was no path from one web server to another without going through the provisioner first.
+
+## Challenges
+
+I locked myself out of the jump box twice while tightening the NSG rules. The problem was rule priority ordering — my deny-all rule was evaluating before the allow-SSH rule, so my own IP got blocked. I diagnosed it by checking the NSG effective rules in the Azure portal, which showed the deny hitting first. The fix was reordering the rule priorities so the allow-SSH rule evaluated before the broad deny.
 
 ## Outcome
 
-The architecture handled traffic scaling with minimal downtime while maintaining a clear security boundary at each layer. The hardest part was getting the NSG rules right without accidentally locking myself out of the jump box during testing — which happened twice before I nailed down the correct rule ordering.
+The final architecture — one jump box, three web servers, a load balancer, and scoped NSG rules — maintained a clear security boundary at each layer with no public SSH exposure and no direct routes between web servers.

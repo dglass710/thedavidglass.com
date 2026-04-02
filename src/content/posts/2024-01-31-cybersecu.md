@@ -1,14 +1,14 @@
 ---
-title: "Scavenger Hunt: A Cybersecurity Adventure"
+title: "CTF Walkthrough: User to Root in Eight Flags"
 date: 2024-01-31
-slug: "cybersecu"
+slug: "linux-ctf-privilege-escalation"
 type: post
 categories: ["projects"]
 ---
 
 ## Project Overview
 
-A CTF-style scavenger hunt with eight flags hidden across a Linux system. Each task built on the previous one — credentials found in one step unlocked the next user account, creating a chain from unprivileged user to root.
+A CTF-style scavenger hunt with eight flags hidden across a Linux system. Each task built on the previous one — credentials from one step unlocked the next user account, chaining from unprivileged user to root.
 
 ## Discovering Hidden Files
 
@@ -16,7 +16,7 @@ The first task was finding hidden files containing user passwords. I listed all 
 
 ## Cracking a Hacker's Password
 
-I needed to identify a famous hacker's user account and crack the password. The account belonged to Kevin Mitnick. I ran John the Ripper against the password list and cracked it (`trustno1`). Logging in revealed the second flag.
+I needed to identify a famous hacker's user account and crack the password. The account belonged to Kevin Mitnick. I ran John the Ripper against `/etc/shadow` using the password list as a wordlist and cracked it (`trustno1`). Logging in revealed the second flag.
 
 ## Analyzing Log Files for Clues
 
@@ -26,13 +26,9 @@ The third task involved a log file and a zip file in Mitnick's account. I inspec
 
 In babbage's home directory, I needed to find files with specific read and execute permissions. I searched for files with permissions `-r-------x` and found that the file named `stallman` contained the password (`computer`) for the stallman user.
 
-## Debugging a Bash Script
+## Filesystem Attention to Detail
 
-The fifth challenge was a faulty bash script in stallman's home directory. The script `flag5.sh` had syntax errors. I fixed them and ran the script to reveal the next flag.
-
-## Inspecting Custom Aliases
-
-For the sixth flag, I checked the sysadmin user's `.bashrc` file and found a custom alias that contained the flag. Running it produced flag six.
+Flags five and six tested attention to detail on the filesystem. The fifth was a faulty bash script (`flag5.sh`) in stallman's home directory with missing quotes around variable expansions and a broken conditional test — fixing the syntax and running it produced the flag. The sixth was hidden in the sysadmin user's `.bashrc` as a custom alias that echoed the flag when invoked, the kind of thing you only catch by inspecting shell configuration files on every account you access.
 
 ## Gaining Root Access
 
@@ -40,8 +36,8 @@ I discovered that sysadmin could run `less` with root privileges via sudo. I dro
 
 ## Gathering and Cracking All Flags
 
-The final task: gather all previously found flags, format them as username:password pairs, and crack them with John the Ripper. I searched the full system for flag files, compiled them, and cracked the passwords to reveal the eighth and final flag.
+The final task: gather all previously found flags, format them as username:password pairs, and crack them with John the Ripper. I ran `find / -name "flag*"` to locate every flag file on the system, compiled them into a single list of MD5-hashed passwords, and ran John against them to reveal the eighth and final flag.
 
 ## Outcome
 
-The most satisfying step was the log analysis — figuring out that IP addresses were the zip password required a mental leap that no tool could automate. The chain from one user account to the next made this feel like a realistic privilege escalation scenario rather than a set of isolated puzzles.
+Every flag required a different skill — file discovery, password cracking, log analysis, permission enumeration, script debugging, shell config inspection, and sudo abuse — but the privilege escalation chain is what tied them together. The hardest step was the `less`-to-root escalation because it required knowing that interactive pagers can spawn shells, something I had read about but never exploited hands-on. If I did this again I would script the enumeration earlier; I manually checked permissions and configs for the first several accounts before writing a reusable checklist, which cost time I could have saved.
