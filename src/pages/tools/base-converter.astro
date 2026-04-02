@@ -24,6 +24,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         </div>
 
         <div class="base-grid" id="baseButtons"></div>
+
+        <div class="rows-control">
+          <label for="rowSlider">Rows</label>
+          <input type="range" id="rowSlider" min="4" max="256" value="16" />
+          <span class="row-count" id="rowCount">0 – 16</span>
+        </div>
       </div>
 
       <div class="tool-section table-section anim-in" style="--delay: 0.15s">
@@ -88,9 +94,16 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         return res;
       }
 
+      var rowSlider = document.getElementById('rowSlider');
+      var rowCount = document.getElementById('rowCount');
+      rowSlider.addEventListener('input', function() {
+        rowCount.textContent = '0 – ' + this.value;
+        generateTable();
+      });
+
       function generateTable() {
         var min = 0;
-        var max = 16;
+        var max = parseInt(rowSlider.value);
         var selected = Array.from(baseContainer.querySelectorAll('.base-btn.on'))
           .map(function(b) { return parseInt(b.dataset.base); })
           .sort(function(a, b) { return a - b; });
@@ -186,6 +199,63 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     display: flex;
     flex-wrap: wrap;
     gap: 0.35rem;
+  }
+  .rows-control {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border);
+  }
+  .rows-control label {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+  }
+  .rows-control input[type="range"] {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+  }
+  .rows-control input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid var(--bg-primary);
+    box-shadow: 0 0 8px var(--accent-glow-strong);
+    transition: transform 0.15s;
+  }
+  .rows-control input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+  }
+  .rows-control input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid var(--bg-primary);
+    box-shadow: 0 0 8px var(--accent-glow-strong);
+  }
+  .row-count {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--accent);
+    min-width: 4.5rem;
+    text-align: right;
+    white-space: nowrap;
   }
   #baseButtons :global(.base-btn) {
     font-family: var(--font-mono);
