@@ -143,7 +143,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     flex-wrap: wrap;
     gap: 0.35rem;
   }
-  .base-btn {
+  #baseButtons :global(.base-btn) {
     font-family: var(--font-mono);
     font-size: 0.75rem;
     color: var(--text-dim);
@@ -156,11 +156,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     user-select: none;
     line-height: 1.2;
   }
-  .base-btn:hover {
+  #baseButtons :global(.base-btn:hover) {
     color: var(--text-muted);
     border-color: var(--text-dim);
   }
-  .base-btn.on {
+  #baseButtons :global(.base-btn.on) {
     border-color: var(--accent);
     color: var(--accent);
     background: var(--accent-glow);
@@ -170,25 +170,25 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     padding: 0;
     overflow-x: auto;
   }
-  .table-section table {
+  .table-section :global(table) {
     border-collapse: collapse;
     width: 100%;
     font-size: 0.82rem;
     font-family: var(--font-mono);
   }
-  .table-section th,
-  .table-section td {
+  .table-section :global(th),
+  .table-section :global(td) {
     padding: 0.4rem 0.6rem;
     text-align: center;
     border-bottom: 1px solid var(--border);
     border-right: 1px solid rgba(22, 27, 46, 0.5);
     white-space: nowrap;
   }
-  .table-section th:last-child,
-  .table-section td:last-child {
+  .table-section :global(th:last-child),
+  .table-section :global(td:last-child) {
     border-right: none;
   }
-  .table-section th {
+  .table-section :global(th) {
     background: var(--bg-surface-hover);
     color: var(--text);
     font-weight: 600;
@@ -197,21 +197,21 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     z-index: 1;
     padding: 0.6rem;
   }
-  .table-section td {
+  .table-section :global(td) {
     color: var(--text-muted);
   }
-  .table-section tr:nth-child(even) td {
+  .table-section :global(tr:nth-child(even) td) {
     background: rgba(255, 255, 255, 0.015);
   }
-  .table-section td.val-col {
+  .table-section :global(td.val-col) {
     color: var(--accent);
     font-weight: 600;
     background: var(--accent-glow);
   }
-  .table-section tr:hover td {
+  .table-section :global(tr:hover td) {
     background: var(--bg-surface-hover);
   }
-  .table-section tr:hover td.val-col {
+  .table-section :global(tr:hover td.val-col) {
     background: var(--accent-glow-strong);
   }
 </style>
