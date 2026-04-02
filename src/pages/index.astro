@@ -3,37 +3,15 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
 
 const allPosts = await getCollection('posts', ({ data }) => !data.draft);
-const recentPosts = allPosts
-  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
-  .slice(0, 4);
 
-const projects = [
-  {
-    title: 'Azure Cloud Architecture Project',
-    slug: 'azure-cloud-architecture-project-secure-web-application-deployment',
-    description: 'Designed and deployed a secure, scalable web application on Microsoft Azure using Ansible, Docker containers, and network security groups.',
-  },
-  {
-    title: 'Web Application Penetration Testing',
-    slug: 'web-application-penetration-testing-project',
-    description: 'Identified and exploited web application vulnerabilities through penetration testing exercises and a Capture the Flag competition.',
-  },
-  {
-    title: 'Have I Been Pwned? Offline',
-    slug: 'have-i-been-pwned-offline-project',
-    description: 'Built an offline version of the Have I Been Pwned service, allowing password breach checks without an internet connection using Docker.',
-  },
-  {
-    title: 'Three-Day Cybersecurity Challenge',
-    slug: 'three-day-cybersecurity-challenge',
-    description: 'Completed intensive penetration tests across web apps, Linux containers, and Windows systems over three days of hands-on challenges.',
-  },
-  {
-    title: 'Scavenger Hunt: A Cybersecurity Adventure',
-    slug: 'cybersecu',
-    description: 'Solved real-world cybersecurity puzzles involving password cracking, privilege escalation, and hidden file discovery in a gamified challenge.',
-  },
-];
+const caseStudies = allPosts
+  .filter((p) => p.data.categories?.includes('projects'))
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+
+const devSeries = allPosts
+  .filter((p) => p.data.categories?.includes('Bootcamp Blog'))
+  .sort((a, b) => a.data.date.getTime() - b.data.date.getTime())
+  .slice(0, 4);
 
 function getExcerpt(body: string, length = 150): string {
   const cleaned = body
@@ -66,17 +44,15 @@ function formatDate(date: Date): string {
   <div class="container">
     <section class="section">
       <div class="section-header">
-        <h2>Featured Projects</h2>
-        <a href="/projects">View all &rarr;</a>
+        <h2>Case Studies</h2>
+        <a href="/blog">View all &rarr;</a>
       </div>
       <div class="card-grid">
-        {projects.map((project) => (
+        {caseStudies.map((post) => (
           <article class="card">
-            <h3><a href={`/blog/${project.slug}`}>{project.title}</a></h3>
-            <p class="excerpt">{project.description}</p>
-            <div class="categories">
-              <span class="tag">Cybersecurity</span>
-            </div>
+            <h3><a href={`/blog/${post.data.slug}`}>{post.data.title}</a></h3>
+            <p class="meta">{formatDate(post.data.date)}</p>
+            <p class="excerpt">{getExcerpt(post.body || '', 150)}</p>
           </article>
         ))}
       </div>
@@ -84,22 +60,15 @@ function formatDate(date: Date): string {
 
     <section class="section">
       <div class="section-header">
-        <h2>Recent Posts</h2>
+        <h2>Cybersecurity Development Series</h2>
         <a href="/blog">View all &rarr;</a>
       </div>
       <div class="card-grid">
-        {recentPosts.map((post) => (
+        {devSeries.map((post) => (
           <article class="card">
             <h3><a href={`/blog/${post.data.slug}`}>{post.data.title}</a></h3>
             <p class="meta">{formatDate(post.data.date)}</p>
             <p class="excerpt">{getExcerpt(post.body || '', 150)}</p>
-            {post.data.categories && post.data.categories.length > 0 && (
-              <div class="categories">
-                {post.data.categories.map((cat: string) => (
-                  <span class="tag">{cat}</span>
-                ))}
-              </div>
-            )}
           </article>
         ))}
       </div>

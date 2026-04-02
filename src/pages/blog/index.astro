@@ -3,7 +3,14 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
 
 const posts = await getCollection('posts', ({ data }) => !data.draft);
-const sortedPosts = posts.sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+
+const devSeries = posts
+  .filter((p) => p.data.categories?.includes('Bootcamp Blog'))
+  .sort((a, b) => a.data.date.getTime() - b.data.date.getTime());
+
+const caseStudies = posts
+  .filter((p) => p.data.categories?.includes('projects'))
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
 
 function getExcerpt(body: string, length = 150): string {
   const cleaned = body
@@ -24,23 +31,48 @@ function formatDate(date: Date): string {
   <div class="container">
     <div class="page-header">
       <h1>Blog</h1>
-      <p>Cybersecurity insights, bootcamp updates, and project write-ups.</p>
+      <p>Cybersecurity case studies, development insights, and professional growth.</p>
     </div>
-    <div class="card-grid">
-      {sortedPosts.map((post) => (
-        <article class="card">
-          <h3><a href={`/blog/${post.data.slug}`}>{post.data.title}</a></h3>
-          <p class="meta">{formatDate(post.data.date)}</p>
-          <p class="excerpt">{getExcerpt(post.body || '', 150)}</p>
-          {post.data.categories && post.data.categories.length > 0 && (
-            <div class="categories">
-              {post.data.categories.map((cat: string) => (
-                <span class="tag">{cat}</span>
-              ))}
-            </div>
-          )}
-        </article>
-      ))}
-    </div>
+
+    <section class="section">
+      <div class="section-header">
+        <h2>Case Studies</h2>
+      </div>
+      <p class="section-description">Hands-on security assessments, architecture projects, and technical deep dives.</p>
+      <div class="card-grid">
+        {caseStudies.map((post) => (
+          <article class="card">
+            <h3><a href={`/blog/${post.data.slug}`}>{post.data.title}</a></h3>
+            <p class="meta">{formatDate(post.data.date)}</p>
+            <p class="excerpt">{getExcerpt(post.body || '', 150)}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <h2>Cybersecurity Development Series</h2>
+      </div>
+      <p class="section-description">Documenting my professional development in offensive security, network defense, and threat analysis.</p>
+      <div class="card-grid">
+        {devSeries.map((post) => (
+          <article class="card">
+            <h3><a href={`/blog/${post.data.slug}`}>{post.data.title}</a></h3>
+            <p class="meta">{formatDate(post.data.date)}</p>
+            <p class="excerpt">{getExcerpt(post.body || '', 150)}</p>
+          </article>
+        ))}
+      </div>
+    </section>
   </div>
 </BaseLayout>
+
+<style>
+  .section-description {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    margin-top: -1.25rem;
+    margin-bottom: 1.5rem;
+  }
+</style>
