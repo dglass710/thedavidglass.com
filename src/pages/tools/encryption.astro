@@ -34,19 +34,39 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
               <button class="action-btn" id="aes-gen-key">Generate</button>
             </div>
           </div>
-          <div class="field">
-            <label>Message</label>
-            <textarea id="aes-message" placeholder="Enter text to encrypt or ciphertext to decrypt" rows="3"></textarea>
+
+          <div class="sub-tab-bar">
+            <button class="sub-tab-btn active" data-subtab="aes-enc">Encrypt</button>
+            <button class="sub-tab-btn" data-subtab="aes-dec">Decrypt</button>
           </div>
-          <div class="button-row">
-            <button class="btn btn-primary" id="aes-encrypt">Encrypt</button>
-            <button class="btn btn-outline" id="aes-decrypt">Decrypt</button>
+
+          <div class="sub-tab-content active" id="subtab-aes-enc">
+            <div class="field">
+              <label>Plaintext</label>
+              <textarea id="aes-enc-message" placeholder="Enter the message you want to encrypt" rows="3"></textarea>
+            </div>
+            <button class="btn btn-primary" id="aes-encrypt" style="width:100%; margin-bottom:1rem;">Encrypt</button>
+            <div class="field">
+              <label>Encrypted Output</label>
+              <div class="input-row">
+                <textarea id="aes-enc-output" readonly rows="3" placeholder="Ciphertext will appear here"></textarea>
+                <button class="action-btn copy-btn" data-target="aes-enc-output">Copy</button>
+              </div>
+            </div>
           </div>
-          <div class="field">
-            <label>Output</label>
-            <div class="input-row">
-              <textarea id="aes-output" readonly rows="3" placeholder="Result will appear here"></textarea>
-              <button class="action-btn copy-btn" data-target="aes-output">Copy</button>
+
+          <div class="sub-tab-content" id="subtab-aes-dec">
+            <div class="field">
+              <label>Ciphertext</label>
+              <textarea id="aes-dec-message" placeholder="Paste the encrypted text you want to decrypt" rows="3"></textarea>
+            </div>
+            <button class="btn btn-outline" id="aes-decrypt" style="width:100%; margin-bottom:1rem;">Decrypt</button>
+            <div class="field">
+              <label>Decrypted Output</label>
+              <div class="input-row">
+                <textarea id="aes-dec-output" readonly rows="3" placeholder="Original message will appear here"></textarea>
+                <button class="action-btn copy-btn" data-target="aes-dec-output">Copy</button>
+              </div>
             </div>
           </div>
         </div>
@@ -255,6 +275,42 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   .button-row .btn {
     flex: 1;
   }
+  .sub-tab-bar {
+    display: flex;
+    gap: 0;
+    margin-bottom: 1.25rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    width: fit-content;
+  }
+  .sub-tab-btn {
+    background: var(--bg-primary);
+    border: none;
+    border-right: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 0.5rem 1.25rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .sub-tab-btn:last-child {
+    border-right: none;
+  }
+  .sub-tab-btn.active {
+    background: var(--accent-glow);
+    color: var(--accent-hover);
+  }
+  .sub-tab-btn:hover:not(.active) {
+    color: var(--text);
+  }
+  .sub-tab-content {
+    display: none;
+  }
+  .sub-tab-content.active {
+    display: block;
+  }
   .divider {
     border: none;
     border-top: 1px solid var(--border);
@@ -294,6 +350,17 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     });
   });
 
+  // Sub-tab switching
+  document.querySelectorAll('.sub-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const parent = btn.closest('.tool-section');
+      parent.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
+      parent.querySelectorAll('.sub-tab-content').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('subtab-' + btn.dataset.subtab).classList.add('active');
+    });
+  });
+
   // --- AES ---
   document.getElementById('aes-gen-key').addEventListener('click', () => {
     const size = parseInt(document.getElementById('aes-key-size').value);
@@ -303,22 +370,22 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
   document.getElementById('aes-encrypt').addEventListener('click', () => {
     const key = document.getElementById('aes-key').value;
-    const msg = document.getElementById('aes-message').value;
+    const msg = document.getElementById('aes-enc-message').value;
     if (!key) { alert('Please enter or generate a key.'); return; }
-    if (!msg) { alert('Please enter a message.'); return; }
-    document.getElementById('aes-output').value = CryptoJS.AES.encrypt(msg, key).toString();
+    if (!msg) { alert('Please enter a message to encrypt.'); return; }
+    document.getElementById('aes-enc-output').value = CryptoJS.AES.encrypt(msg, key).toString();
   });
 
   document.getElementById('aes-decrypt').addEventListener('click', () => {
     const key = document.getElementById('aes-key').value;
-    const msg = document.getElementById('aes-message').value;
+    const msg = document.getElementById('aes-dec-message').value;
     if (!key) { alert('Please enter a key.'); return; }
-    if (!msg) { alert('Please enter ciphertext.'); return; }
+    if (!msg) { alert('Please paste ciphertext to decrypt.'); return; }
     try {
       const result = CryptoJS.AES.decrypt(msg, key).toString(CryptoJS.enc.Utf8);
-      document.getElementById('aes-output').value = result || '(decryption failed — wrong key or corrupted input)';
+      document.getElementById('aes-dec-output').value = result || '(decryption failed — wrong key or corrupted input)';
     } catch {
-      document.getElementById('aes-output').value = '(decryption failed — wrong key or corrupted input)';
+      document.getElementById('aes-dec-output').value = '(decryption failed — wrong key or corrupted input)';
     }
   });
 
