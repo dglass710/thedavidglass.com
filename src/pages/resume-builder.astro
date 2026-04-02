@@ -1,0 +1,21 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getCollection, render } from 'astro:content';
+
+const pages = await getCollection('pages');
+const resumePage = pages.find((p) => p.data.slug === 'resume-builder');
+
+let Content: any = null;
+if (resumePage) {
+  const rendered = await render(resumePage);
+  Content = rendered.Content;
+}
+---
+
+<BaseLayout title="Resume Builder | David Glass">
+  <div class="container">
+    <div class="prose">
+      {Content && <Content />}
+    </div>
+  </div>
+</BaseLayout>

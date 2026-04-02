@@ -1,0 +1,73 @@
+---
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = 'Software Developer & Cybersecurity Professional' } = Astro.props;
+const currentPath = Astro.url.pathname;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={Astro.url.href} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <nav class="nav">
+      <div class="nav-inner">
+        <a href="/" class="nav-brand">David Glass</a>
+        <button class="nav-toggle" aria-label="Toggle navigation" id="nav-toggle">
+          <span id="nav-icon">&#9776;</span>
+        </button>
+        <ul class="nav-links" id="nav-links">
+          <li><a href="/" class:list={[{ active: currentPath === '/' }]}>Home</a></li>
+          <li><a href="/blog" class:list={[{ active: currentPath.startsWith('/blog') }]}>Blog</a></li>
+          <li><a href="/projects" class:list={[{ active: currentPath.startsWith('/projects') }]}>Projects</a></li>
+          <li><a href="/about" class:list={[{ active: currentPath.startsWith('/about') }]}>About</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <slot />
+
+    <footer class="footer">
+      <div class="footer-inner">
+        <span class="footer-copy">&copy; {new Date().getFullYear()} David Glass</span>
+        <div class="footer-links">
+          <a href="https://github.com/dglass710" target="_blank" rel="noopener">GitHub</a>
+          <a href="https://www.linkedin.com/in/david-a-glass/" target="_blank" rel="noopener">LinkedIn</a>
+          <a href="mailto:dglass2525@gmail.com">Email</a>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      const toggle = document.getElementById('nav-toggle')!;
+      const links = document.getElementById('nav-links')!;
+      const icon = document.getElementById('nav-icon')!;
+      toggle.addEventListener('click', () => {
+        const open = links.classList.toggle('open');
+        icon.innerHTML = open ? '&#10005;' : '&#9776;';
+      });
+    </script>
+  </body>
+</html>
+
+<style>
+  .nav-links a.active {
+    color: var(--accent-hover);
+  }
+</style>
+
+<style is:global>
+  @import '../styles/global.css';
+</style>

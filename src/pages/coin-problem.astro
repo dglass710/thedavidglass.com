@@ -1,0 +1,21 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getCollection, render } from 'astro:content';
+
+const pages = await getCollection('pages');
+const coinPage = pages.find((p) => p.data.slug === 'coin-problem');
+
+let Content: any = null;
+if (coinPage) {
+  const rendered = await render(coinPage);
+  Content = rendered.Content;
+}
+---
+
+<BaseLayout title="Coin Problem | David Glass">
+  <div class="container">
+    <div class="prose">
+      {Content && <Content />}
+    </div>
+  </div>
+</BaseLayout>
