@@ -42,6 +42,90 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         <div id="tableContainer"></div>
       </div>
     </div>
+
+    <script is:inline>
+      var DEFAULT_ON = [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16];
+
+      var baseContainer = document.getElementById('baseButtons');
+      for (var i = 1; i <= 36; i++) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'base-btn' + (DEFAULT_ON.indexOf(i) !== -1 ? ' on' : '');
+        btn.dataset.base = i;
+        btn.textContent = 'B' + i;
+        btn.addEventListener('click', function() {
+          this.classList.toggle('on');
+          qsBtns.forEach(function(b) { b.classList.remove('active'); });
+        });
+        baseContainer.appendChild(btn);
+      }
+
+      var qsBtns = document.querySelectorAll('.qs-btn');
+      qsBtns.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var val = btn.dataset.bases;
+          var baseBtns = baseContainer.querySelectorAll('.base-btn');
+
+          qsBtns.forEach(function(b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+
+          if (val === 'all') {
+            baseBtns.forEach(function(b) { b.classList.add('on'); });
+          } else if (val === 'none') {
+            baseBtns.forEach(function(b) { b.classList.remove('on'); });
+          } else {
+            var bases = val.split(',').map(Number);
+            baseBtns.forEach(function(b) {
+              if (bases.indexOf(parseInt(b.dataset.base)) !== -1) {
+                b.classList.add('on');
+              } else {
+                b.classList.remove('on');
+              }
+            });
+          }
+        });
+      });
+
+      function toBase(n, b) {
+        var digits = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        if (b === 1) return Array(n + 2).join('0');
+        if (n === 0) return '0';
+        var res = '';
+        while (n > 0) {
+          res = digits[n % b] + res;
+          n = Math.floor(n / b);
+        }
+        return res;
+      }
+
+      function generateTable() {
+        var min = parseInt(document.getElementById('minValue').value) || 0;
+        var max = parseInt(document.getElementById('maxValue').value) || 16;
+        var selected = Array.from(baseContainer.querySelectorAll('.base-btn.on'))
+          .map(function(b) { return parseInt(b.dataset.base); })
+          .sort(function(a, b) { return a - b; });
+
+        if (selected.length === 0) {
+          document.getElementById('tableContainer').innerHTML = '<p style="color: var(--text-dim); padding: 1.75rem;">Select at least one base.</p>';
+          return;
+        }
+
+        var html = '<table><thead><tr><th>Value</th>';
+        selected.forEach(function(b) { html += '<th>Base ' + b + '</th>'; });
+        html += '</tr></thead><tbody>';
+
+        for (var v = min; v <= max; v++) {
+          html += '<tr><td class="val-col">' + v + '</td>';
+          selected.forEach(function(b) { html += '<td>' + toBase(v, b) + '</td>'; });
+          html += '</tr>';
+        }
+        html += '</tbody></table>';
+        document.getElementById('tableContainer').innerHTML = html;
+      }
+
+      document.getElementById('generateBtn').addEventListener('click', generateTable);
+      generateTable();
+    </script>
   </div>
 </BaseLayout>
 
@@ -215,88 +299,3 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     background: var(--accent-glow-strong);
   }
 </style>
-
-<script is:inline>
-  var DEFAULT_ON = [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16];
-
-  var baseContainer = document.getElementById('baseButtons');
-  for (var i = 1; i <= 36; i++) {
-    var btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'base-btn' + (DEFAULT_ON.indexOf(i) !== -1 ? ' on' : '');
-    btn.dataset.base = i;
-    btn.textContent = 'B' + i;
-    btn.addEventListener('click', function() {
-      this.classList.toggle('on');
-      qsBtns.forEach(function(b) { b.classList.remove('active'); });
-    });
-    baseContainer.appendChild(btn);
-  }
-
-  // Quick select with active state
-  var qsBtns = document.querySelectorAll('.qs-btn');
-  qsBtns.forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      var val = btn.dataset.bases;
-      var baseBtns = baseContainer.querySelectorAll('.base-btn');
-
-      qsBtns.forEach(function(b) { b.classList.remove('active'); });
-      btn.classList.add('active');
-
-      if (val === 'all') {
-        baseBtns.forEach(function(b) { b.classList.add('on'); });
-      } else if (val === 'none') {
-        baseBtns.forEach(function(b) { b.classList.remove('on'); });
-      } else {
-        var bases = val.split(',').map(Number);
-        baseBtns.forEach(function(b) {
-          if (bases.indexOf(parseInt(b.dataset.base)) !== -1) {
-            b.classList.add('on');
-          } else {
-            b.classList.remove('on');
-          }
-        });
-      }
-    });
-  });
-
-  function toBase(n, b) {
-    var digits = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    if (b === 1) return Array(n + 2).join('0');
-    if (n === 0) return '0';
-    var res = '';
-    while (n > 0) {
-      res = digits[n % b] + res;
-      n = Math.floor(n / b);
-    }
-    return res;
-  }
-
-  function generateTable() {
-    var min = parseInt(document.getElementById('minValue').value) || 0;
-    var max = parseInt(document.getElementById('maxValue').value) || 16;
-    var selected = Array.from(baseContainer.querySelectorAll('.base-btn.on'))
-      .map(function(b) { return parseInt(b.dataset.base); })
-      .sort(function(a, b) { return a - b; });
-
-    if (selected.length === 0) {
-      document.getElementById('tableContainer').innerHTML = '<p style="color: var(--text-dim); padding: 1.75rem;">Select at least one base.</p>';
-      return;
-    }
-
-    var html = '<table><thead><tr><th>Value</th>';
-    selected.forEach(function(b) { html += '<th>Base ' + b + '</th>'; });
-    html += '</tr></thead><tbody>';
-
-    for (var v = min; v <= max; v++) {
-      html += '<tr><td class="val-col">' + v + '</td>';
-      selected.forEach(function(b) { html += '<td>' + toBase(v, b) + '</td>'; });
-      html += '</tr>';
-    }
-    html += '</tbody></table>';
-    document.getElementById('tableContainer').innerHTML = html;
-  }
-
-  document.getElementById('generateBtn').addEventListener('click', generateTable);
-  generateTable();
-</script>

@@ -153,6 +153,115 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         </div>
       </div>
     </div>
+
+    <script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/jsencrypt/3.2.1/jsencrypt.min.js"></script>
+    <script is:inline>
+      document.querySelectorAll('.tab-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+          document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.remove('active'); });
+          btn.classList.add('active');
+          document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+        });
+      });
+      document.querySelectorAll('.sub-tab-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var parent = btn.closest('.tool-section');
+          parent.querySelectorAll('.sub-tab-btn').forEach(function(b) { b.classList.remove('active'); });
+          parent.querySelectorAll('.sub-tab-content').forEach(function(t) { t.classList.remove('active'); });
+          btn.classList.add('active');
+          document.getElementById('subtab-' + btn.dataset.subtab).classList.add('active');
+        });
+      });
+      document.querySelectorAll('.copy-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var target = document.getElementById(btn.dataset.target);
+          var text = target.value || target.textContent;
+          if (!text) return;
+          var self = btn;
+          navigator.clipboard.writeText(text).then(function() {
+            var orig = self.textContent;
+            self.textContent = 'Copied!';
+            self.classList.add('copied');
+            setTimeout(function() { self.textContent = orig; self.classList.remove('copied'); }, 1500);
+          });
+        });
+      });
+      document.getElementById('aes-gen-key').addEventListener('click', function() {
+        var size = parseInt(document.getElementById('aes-key-size').value);
+        var key = CryptoJS.lib.WordArray.random(size / 8).toString(CryptoJS.enc.Hex);
+        document.getElementById('aes-key').value = key;
+      });
+      document.getElementById('aes-encrypt').addEventListener('click', function() {
+        var key = document.getElementById('aes-key').value;
+        var msg = document.getElementById('aes-enc-message').value;
+        if (!key) { alert('Please enter or generate a key.'); return; }
+        if (!msg) { alert('Please enter a message to encrypt.'); return; }
+        document.getElementById('aes-enc-output').value = CryptoJS.AES.encrypt(msg, key).toString();
+      });
+      document.getElementById('aes-decrypt').addEventListener('click', function() {
+        var key = document.getElementById('aes-key').value;
+        var msg = document.getElementById('aes-dec-message').value;
+        if (!key) { alert('Please enter a key.'); return; }
+        if (!msg) { alert('Please paste ciphertext to decrypt.'); return; }
+        try {
+          var result = CryptoJS.AES.decrypt(msg, key).toString(CryptoJS.enc.Utf8);
+          document.getElementById('aes-dec-output').value = result || '(decryption failed — wrong key or corrupted input)';
+        } catch(e) {
+          document.getElementById('aes-dec-output').value = '(decryption failed — wrong key or corrupted input)';
+        }
+      });
+      var storedPrivateKey = '';
+      document.getElementById('rsa-key-size').addEventListener('change', function() {
+        document.getElementById('rsa-warning').style.display = this.value === '4096' ? 'block' : 'none';
+      });
+      document.getElementById('rsa-gen-keys').addEventListener('click', function() {
+        var size = document.getElementById('rsa-key-size').value;
+        var loading = document.getElementById('rsa-loading');
+        loading.style.display = 'flex';
+        setTimeout(function() {
+          var crypt = new JSEncrypt({ default_key_size: size });
+          crypt.getKey();
+          document.getElementById('rsa-public-key').value = crypt.getPublicKey();
+          storedPrivateKey = crypt.getPrivateKey();
+          document.getElementById('rsa-private-key').value = storedPrivateKey;
+          loading.style.display = 'none';
+        }, 50);
+      });
+      document.getElementById('rsa-toggle-vis').addEventListener('click', function() {
+        var pk = document.getElementById('rsa-private-key');
+        if (pk.classList.contains('masked')) {
+          pk.classList.remove('masked');
+          pk.style.webkitTextSecurity = '';
+          this.textContent = 'Hide';
+        } else {
+          pk.classList.add('masked');
+          pk.style.webkitTextSecurity = 'disc';
+          this.textContent = 'Show';
+        }
+      });
+      document.getElementById('rsa-encrypt').addEventListener('click', function() {
+        var key = document.getElementById('rsa-public-key').value;
+        var msg = document.getElementById('rsa-enc-message').value;
+        if (!key) { alert('Please generate or enter a public key.'); return; }
+        if (!msg) { alert('Please enter a message.'); return; }
+        var crypt = new JSEncrypt();
+        crypt.setPublicKey(key);
+        var encrypted = crypt.encrypt(msg);
+        document.getElementById('rsa-enc-output').value = encrypted || '(encryption failed — message may be too long for key size)';
+      });
+      document.getElementById('rsa-decrypt').addEventListener('click', function() {
+        var key = document.getElementById('rsa-private-key').value || storedPrivateKey;
+        var msg = document.getElementById('rsa-dec-message').value;
+        if (!key) { alert('Please generate or enter a private key.'); return; }
+        if (!msg) { alert('Please enter encrypted text.'); return; }
+        var crypt = new JSEncrypt();
+        crypt.setPrivateKey(key);
+        var decrypted = crypt.decrypt(msg);
+        document.getElementById('rsa-dec-output').value = decrypted || '(decryption failed — wrong key or corrupted input)';
+      });
+    </script>
   </div>
 </BaseLayout>
 
@@ -373,131 +482,3 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     .input-row { flex-direction: column; }
   }
 </style>
-
-<script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-<script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/jsencrypt/3.2.1/jsencrypt.min.js"></script>
-<script is:inline>
-  // Tab switching
-  document.querySelectorAll('.tab-btn').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
-      document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.remove('active'); });
-      btn.classList.add('active');
-      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
-    });
-  });
-
-  // Sub-tab switching
-  document.querySelectorAll('.sub-tab-btn').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      var parent = btn.closest('.tool-section');
-      parent.querySelectorAll('.sub-tab-btn').forEach(function(b) { b.classList.remove('active'); });
-      parent.querySelectorAll('.sub-tab-content').forEach(function(t) { t.classList.remove('active'); });
-      btn.classList.add('active');
-      document.getElementById('subtab-' + btn.dataset.subtab).classList.add('active');
-    });
-  });
-
-  // Copy buttons with visual feedback
-  document.querySelectorAll('.copy-btn').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      var target = document.getElementById(btn.dataset.target);
-      var text = target.value || target.textContent;
-      if (!text) return;
-      var self = btn;
-      navigator.clipboard.writeText(text).then(function() {
-        var orig = self.textContent;
-        self.textContent = 'Copied!';
-        self.classList.add('copied');
-        setTimeout(function() {
-          self.textContent = orig;
-          self.classList.remove('copied');
-        }, 1500);
-      });
-    });
-  });
-
-  // --- AES ---
-  document.getElementById('aes-gen-key').addEventListener('click', function() {
-    var size = parseInt(document.getElementById('aes-key-size').value);
-    var key = CryptoJS.lib.WordArray.random(size / 8).toString(CryptoJS.enc.Hex);
-    document.getElementById('aes-key').value = key;
-  });
-
-  document.getElementById('aes-encrypt').addEventListener('click', function() {
-    var key = document.getElementById('aes-key').value;
-    var msg = document.getElementById('aes-enc-message').value;
-    if (!key) { alert('Please enter or generate a key.'); return; }
-    if (!msg) { alert('Please enter a message to encrypt.'); return; }
-    document.getElementById('aes-enc-output').value = CryptoJS.AES.encrypt(msg, key).toString();
-  });
-
-  document.getElementById('aes-decrypt').addEventListener('click', function() {
-    var key = document.getElementById('aes-key').value;
-    var msg = document.getElementById('aes-dec-message').value;
-    if (!key) { alert('Please enter a key.'); return; }
-    if (!msg) { alert('Please paste ciphertext to decrypt.'); return; }
-    try {
-      var result = CryptoJS.AES.decrypt(msg, key).toString(CryptoJS.enc.Utf8);
-      document.getElementById('aes-dec-output').value = result || '(decryption failed — wrong key or corrupted input)';
-    } catch(e) {
-      document.getElementById('aes-dec-output').value = '(decryption failed — wrong key or corrupted input)';
-    }
-  });
-
-  // --- RSA ---
-  var storedPrivateKey = '';
-
-  document.getElementById('rsa-key-size').addEventListener('change', function() {
-    document.getElementById('rsa-warning').style.display = this.value === '4096' ? 'block' : 'none';
-  });
-
-  document.getElementById('rsa-gen-keys').addEventListener('click', function() {
-    var size = document.getElementById('rsa-key-size').value;
-    var loading = document.getElementById('rsa-loading');
-    loading.style.display = 'flex';
-    setTimeout(function() {
-      var crypt = new JSEncrypt({ default_key_size: size });
-      crypt.getKey();
-      document.getElementById('rsa-public-key').value = crypt.getPublicKey();
-      storedPrivateKey = crypt.getPrivateKey();
-      document.getElementById('rsa-private-key').value = storedPrivateKey;
-      loading.style.display = 'none';
-    }, 50);
-  });
-
-  document.getElementById('rsa-toggle-vis').addEventListener('click', function() {
-    var pk = document.getElementById('rsa-private-key');
-    if (pk.classList.contains('masked')) {
-      pk.classList.remove('masked');
-      pk.style.webkitTextSecurity = '';
-      this.textContent = 'Hide';
-    } else {
-      pk.classList.add('masked');
-      pk.style.webkitTextSecurity = 'disc';
-      this.textContent = 'Show';
-    }
-  });
-
-  document.getElementById('rsa-encrypt').addEventListener('click', function() {
-    var key = document.getElementById('rsa-public-key').value;
-    var msg = document.getElementById('rsa-enc-message').value;
-    if (!key) { alert('Please generate or enter a public key.'); return; }
-    if (!msg) { alert('Please enter a message.'); return; }
-    var crypt = new JSEncrypt();
-    crypt.setPublicKey(key);
-    var encrypted = crypt.encrypt(msg);
-    document.getElementById('rsa-enc-output').value = encrypted || '(encryption failed — message may be too long for key size)';
-  });
-
-  document.getElementById('rsa-decrypt').addEventListener('click', function() {
-    var key = document.getElementById('rsa-private-key').value || storedPrivateKey;
-    var msg = document.getElementById('rsa-dec-message').value;
-    if (!key) { alert('Please generate or enter a private key.'); return; }
-    if (!msg) { alert('Please enter encrypted text.'); return; }
-    var crypt = new JSEncrypt();
-    crypt.setPrivateKey(key);
-    var decrypted = crypt.decrypt(msg);
-    document.getElementById('rsa-dec-output').value = decrypted || '(decryption failed — wrong key or corrupted input)';
-  });
-</script>
