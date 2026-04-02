@@ -34,7 +34,7 @@ function formatDate(date: Date): string {
       <p>Cybersecurity case studies, development insights, and professional growth.</p>
     </div>
 
-    <section class="section">
+    <section class="section anim-in" style="--delay: 0.05s">
       <div class="section-header">
         <h2>Case Studies</h2>
       </div>
@@ -50,7 +50,7 @@ function formatDate(date: Date): string {
       </div>
     </section>
 
-    <section class="section">
+    <section class="section anim-in" style="--delay: 0.15s">
       <div class="section-header">
         <h2>Cybersecurity Development Series</h2>
       </div>
@@ -69,9 +69,14 @@ function formatDate(date: Date): string {
 </BaseLayout>
 
 <style>
+  .anim-in {
+    animation: fadeUp 0.5s ease both;
+    animation-delay: var(--delay, 0s);
+  }
   .section-description {
     color: var(--text-muted);
-    font-size: 0.95rem;
+    font-family: var(--font-body);
+    font-size: 0.9rem;
     margin-top: -1.25rem;
     margin-bottom: 1.5rem;
   }

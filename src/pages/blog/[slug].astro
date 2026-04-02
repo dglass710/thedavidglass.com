@@ -16,23 +16,125 @@ const { Content } = await render(post);
 function formatDate(date: Date): string {
   return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 }
+
+function estimateReadTime(body: string): number {
+  const words = body.trim().split(/\s+/).length;
+  return Math.max(1, Math.ceil(words / 230));
+}
+
+const readTime = estimateReadTime(post.body || '');
+const category = post.data.categories?.[0] || null;
+const categoryLabel = category === 'projects' ? 'Case Study' : category === 'Bootcamp Blog' ? 'Development Series' : category;
 ---
 
 <BaseLayout title={`${post.data.title} | David Glass`}>
+  <div class="progress-bar" id="progressBar"></div>
+
   <div class="container">
     <article>
-      <div class="post-header">
+      <nav class="post-nav-top anim-in" style="--delay: 0s">
+        <a href="/blog">&larr; Blog</a>
+      </nav>
+
+      <div class="post-header anim-in" style="--delay: 0.05s">
+        {categoryLabel && <span class="post-category">{categoryLabel}</span>}
         <h1>{post.data.title}</h1>
         <p class="meta">
-          {formatDate(post.data.date)}
-          {post.data.categories && post.data.categories.length > 0 && (
-            <span> &middot; {post.data.categories.join(', ')}</span>
-          )}
+          <span>{formatDate(post.data.date)}</span>
+          <span class="meta-sep">&middot;</span>
+          <span>{readTime} min read</span>
         </p>
       </div>
-      <div class="prose">
+
+      <div class="prose anim-in" style="--delay: 0.15s">
         <Content />
+      </div>
+
+      <div class="post-footer anim-in" style="--delay: 0.2s">
+        <a href="/blog" class="btn btn-outline">&larr; Back to Blog</a>
       </div>
     </article>
   </div>
+
+  <script is:inline>
+    var progressBar = document.getElementById('progressBar');
+    window.addEventListener('scroll', function() {
+      var scrollTop = window.scrollY;
+      var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      var progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+      progressBar.style.width = progress + '%';
+    });
+  </script>
 </BaseLayout>
+
+<style>
+  .progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 2px;
+    width: 0%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent-glow-strong);
+    z-index: 200;
+    transition: width 0.1s linear;
+  }
+  .anim-in {
+    animation: fadeUp 0.5s ease both;
+    animation-delay: var(--delay, 0s);
+  }
+  .post-nav-top {
+    margin-bottom: 1.5rem;
+  }
+  .post-nav-top a {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    transition: color 0.2s;
+  }
+  .post-nav-top a:hover {
+    color: var(--accent);
+  }
+  .post-category {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border: 1px solid rgba(34, 211, 238, 0.2);
+    background: var(--accent-glow);
+    padding: 0.2rem 0.7rem;
+    border-radius: 999px;
+    margin-bottom: 1rem;
+  }
+  .post-header {
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .post-header h1 {
+    font-family: var(--font-display);
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    margin-bottom: 0.85rem;
+  }
+  .post-header .meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+  }
+  .meta-sep {
+    opacity: 0.4;
+  }
+  .post-footer {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+  }
+</style>

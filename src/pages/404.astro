@@ -4,8 +4,15 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
 <BaseLayout title="404 | David Glass">
   <div class="not-found">
-    <h1>404</h1>
-    <p>The page you're looking for doesn't exist.</p>
-    <a href="/" class="btn btn-primary">Go Home</a>
+    <h1 class="anim-in" style="--delay: 0s">404</h1>
+    <p class="anim-in" style="--delay: 0.1s">The page you're looking for doesn't exist.</p>
+    <a href="/" class="btn btn-primary anim-in" style="--delay: 0.2s">Go Home</a>
   </div>
 </BaseLayout>
+
+<style>
+  .anim-in {
+    animation: fadeUp 0.5s ease both;
+    animation-delay: var(--delay, 0s);
+  }
+</style>
