@@ -1,0 +1,544 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Arbitrary Ints | David Glass">
+  <div class="container">
+    <div class="page-header">
+      <h1>Arbitrary Ints</h1>
+      <p>Enter any integer — no matter how large — and see it named in English.</p>
+    </div>
+
+    <div class="tool-panel">
+      <div class="info-banner anim-in" style="--delay: 0.05s">
+        <p>Most languages cap integers at 64 bits — roughly <strong>18.4 quintillion</strong>. Python doesn't. Its arbitrary-precision integers grow as large as memory allows. Originally built as a Flask app, this tool names any integer up to a <strong>Centillion</strong> (10<sup>303</sup>) — a one followed by 303 zeros.</p>
+      </div>
+
+      <div class="tool-section input-section anim-in" style="--delay: 0.1s">
+        <input type="text" id="numInput" class="num-input" placeholder="Enter an integer..." autocomplete="off" spellcheck="false" />
+        <div class="controls-row">
+          <div class="control-group">
+            <label class="control-label">Random Size</label>
+            <div class="toggle-group" id="sizeGroup">
+              <button class="tog-btn on" data-value="6">Thousands</button>
+              <button class="tog-btn" data-value="9">Millions</button>
+              <button class="tog-btn" data-value="15">Trillions</button>
+              <button class="tog-btn" data-value="60">Big</button>
+              <button class="tog-btn" data-value="303">Max</button>
+            </div>
+          </div>
+          <div class="control-group random-group">
+            <label class="control-label">&nbsp;</label>
+            <button class="act-btn accent" id="randomBtn">Random</button>
+          </div>
+        </div>
+        <div class="status-bar">
+          <span class="status-item" id="statusDigits">Digits: —</span>
+          <span class="status-item" id="statusMagnitude">Magnitude: —</span>
+          <span class="status-item" id="statusGroups">Groups: —</span>
+        </div>
+      </div>
+
+      <div class="tool-section output-section anim-in" style="--delay: 0.15s">
+        <div class="output-block">
+          <div class="output-label">Formatted</div>
+          <div class="output-value mono" id="formattedOutput">—</div>
+        </div>
+        <div class="output-block">
+          <div class="output-label">Place Values</div>
+          <div class="output-value" id="abbreviatedOutput">—</div>
+        </div>
+        <div class="output-block">
+          <div class="output-label">Full English Name <span class="word-count" id="wordCount"></span></div>
+          <div class="output-value full-name" id="fullNameOutput">—</div>
+        </div>
+      </div>
+    </div>
+
+    <script is:inline>
+    /* ═══════════════════════════════════════════
+       SIGNIFICANCE TABLE
+       102 entries: Centillion (10^303) down to '' (units)
+       ═══════════════════════════════════════════ */
+    var Significance = [
+      'Centillion',
+      'Novenonagintatillion','Octononagintatillion','Septenonagintatillion',
+      'Senonagintatillion','Quinquanonagintatillion','Quattuornonagintatillion',
+      'Trenonagintatillion','Duononagintatillion','Unonagintatillion','Nonagintatillion',
+      'Noveoctogintatillion','Octoctogintatillion','Septeoctogintatillion',
+      'Seoctogintatillion','Quinquaoctogintatillion','Quattuoroctogintatillion',
+      'Treoctogintatillion','Duoctogintatillion','Unoctogintatillion','Octogintatillion',
+      'Noveseptuagintatillion','Octoseptuagintatillion','Septeseptuagintatillion',
+      'Seseptuagintatillion','Quinquaseptuagintatillion','Quattuorseptuagintatillion',
+      'Treseptuagintatillion','Duoseptuagintatillion','Unseptuagintatillion','Septuagintatillion',
+      'Novesexagintatillion','Octosexagintatillion','Septesexagintatillion',
+      'Sesexagintatillion','Quinquasexagintatillion','Quattuorsexagintatillion',
+      'Tresexagintatillion','Duosexagintatillion','Unsexagintatillion','Sexagintatillion',
+      'Novequinquagintatillion','Octoquinquagintatillion','Septequinquagintatillion',
+      'Sequinquagintatillion','Quinquaquinquagintatillion','Quattuorquinquagintatillion',
+      'Trequinquagintatillion','Duoquinquagintatillion','Unquinquagintatillion','Quinquagintatillion',
+      'Novequadragintatillion','Octoquadragintatillion','Septequadragintatillion',
+      'Sequadragintatillion','Quinquaquadragintatillion','Quattuorquadragintatillion',
+      'Trequadragintatillion','Duoquadragintatillion','Unquadragintatillion','Quadragintatillion',
+      'Novetrigintatillion','Octotrigintatillion','Septetrigintatillion',
+      'Setrigintatillion','Quinquatrigintatillion','Quattuortrigintatillion',
+      'Tretrigintatillion','Duotrigintatillion','Untrigintatillion','Trigintatillion',
+      'Novevigintillion','Octovigintillion','Septevigintillion',
+      'Sevigintillion','Quinquavigintillion','Quattuorvigintillion',
+      'Trevigintillion','Duovigintillion','Unvigintillion','Vigintillion',
+      'Novemdecillion','Octodecillion','Septendecillion','Sexdecillion',
+      'Quindecillion','Quattuordecillion','Tredecillion','Duodecillion',
+      'Undecillion','Decillion',
+      'Nonillion','Octillion','Septillion','Sextillion','Quintillion',
+      'Quadrillion','Trillion','Billion','Million','Thousand',''
+    ];
+
+    /* ═══════════════════════════════════════════
+       COMMA FORMATTING (string-based)
+       ═══════════════════════════════════════════ */
+    function commaNumber(numStr) {
+      var result = '';
+      var len = numStr.length;
+      for (var i = 0; i < len; i++) {
+        if (i > 0 && (len - i) % 3 === 0) result += ',';
+        result += numStr[i];
+      }
+      return result;
+    }
+
+    /* ═══════════════════════════════════════════
+       SAY GROUP (0-999 → English words)
+       ═══════════════════════════════════════════ */
+    function sayGroup(n) {
+      var ones = ['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine'];
+      var tens = ['','Ten','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+      var teens = ['Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+      var d = String(n);
+      while (d.length < 3) d = '0' + d;
+      var r = '';
+      if (d[0] !== '0') {
+        r += ones[parseInt(d[0])] + ' Hundred';
+        if (d[1] !== '0' || d[2] !== '0') r += ' ';
+      }
+      if (d[1] !== '1') {
+        if (d[1] !== '0') {
+          r += tens[parseInt(d[1])];
+          if (d[2] !== '0') r += ' ' + ones[parseInt(d[2])];
+        } else {
+          if (d[2] !== '0') r += ones[parseInt(d[2])];
+        }
+      } else {
+        r += teens[parseInt(d[2])];
+      }
+      return r;
+    }
+
+    /* ═══════════════════════════════════════════
+       FULL ENGLISH NAME
+       ═══════════════════════════════════════════ */
+    function sayFullName(numStr) {
+      if (!numStr || numStr === '0') return 'Zero';
+      var cStr = commaNumber(numStr);
+      var groups = cStr.split(',');
+      var sig = Significance.slice();
+      var parts = [];
+      while (groups.length > 0 && sig.length > 0) {
+        var groupNum = parseInt(groups.pop());
+        var magnitude = sig.pop();
+        if (groupNum) {
+          var part = sayGroup(groupNum);
+          if (magnitude) part += ' ' + magnitude;
+          parts.unshift(part);
+        }
+      }
+      // Numbers beyond centillion: prepend raw groups
+      while (groups.length > 0) {
+        var overflow = groups.shift();
+        if (parseInt(overflow)) parts.unshift(overflow + ' [10^' + (groups.length + Significance.length) * 3 + '+]');
+      }
+      return parts.join(' ') || 'Zero';
+    }
+
+    /* ═══════════════════════════════════════════
+       ABBREVIATED NAME (digits + place names)
+       Returns HTML with styled magnitude spans
+       ═══════════════════════════════════════════ */
+    function sayName(numStr) {
+      if (!numStr || numStr === '0') return '0';
+      var cStr = commaNumber(numStr);
+      var groups = cStr.split(',');
+      var sig = Significance.slice();
+      var parts = [];
+      while (groups.length > 0 && sig.length > 0) {
+        var groupStr = groups.pop();
+        var magnitude = sig.pop();
+        var groupNum = parseInt(groupStr);
+        if (groupNum) {
+          var part = String(groupNum);
+          if (magnitude) part += ' <span class="mag">' + magnitude + '</span>';
+          parts.unshift(part);
+        }
+      }
+      while (groups.length > 0) {
+        parts.unshift(groups.shift());
+      }
+      return parts.join(' ') || '0';
+    }
+
+    /* ═══════════════════════════════════════════
+       MAGNITUDE LABEL
+       ═══════════════════════════════════════════ */
+    function getMagnitude(digitCount) {
+      if (digitCount === 0) return '\u2014';
+      if (digitCount <= 3) return 'Ones';
+      var groups = Math.ceil(digitCount / 3);
+      var idx = Significance.length - groups;
+      if (idx < 0) return 'Beyond Centillion';
+      return Significance[idx] || 'Ones';
+    }
+
+    /* ═══════════════════════════════════════════
+       RANDOM NUMBER GENERATOR
+       ═══════════════════════════════════════════ */
+    function randomNumber(maxDigits) {
+      var len = Math.max(4, Math.floor(Math.random() * maxDigits) + 1);
+      var digits = String(Math.floor(Math.random() * 9) + 1);
+      for (var i = 1; i < len; i++) digits += String(Math.floor(Math.random() * 10));
+      return digits;
+    }
+
+    /* ═══════════════════════════════════════════
+       INPUT SANITIZATION
+       ═══════════════════════════════════════════ */
+    function sanitize(str) {
+      var neg = str.charAt(0) === '-';
+      var digits = str.replace(/[^0-9]/g, '');
+      digits = digits.replace(/^0+/, '') || '0';
+      if (digits.length > 306) digits = digits.slice(0, 306);
+      return (neg && digits !== '0' ? '-' : '') + digits;
+    }
+
+    /* ═══════════════════════════════════════════
+       UI ELEMENTS
+       ═══════════════════════════════════════════ */
+    var numInput = document.getElementById('numInput');
+    var formattedOut = document.getElementById('formattedOutput');
+    var abbreviatedOut = document.getElementById('abbreviatedOutput');
+    var fullNameOut = document.getElementById('fullNameOutput');
+    var statusDigits = document.getElementById('statusDigits');
+    var statusMagnitude = document.getElementById('statusMagnitude');
+    var statusGroups = document.getElementById('statusGroups');
+    var wordCountEl = document.getElementById('wordCount');
+    var randomSize = 6;
+
+    /* ═══════════════════════════════════════════
+       MAIN UPDATE
+       ═══════════════════════════════════════════ */
+    function update() {
+      var raw = numInput.value.trim();
+      if (!raw) {
+        formattedOut.textContent = '\u2014';
+        abbreviatedOut.innerHTML = '\u2014';
+        fullNameOut.textContent = '\u2014';
+        statusDigits.textContent = 'Digits: \u2014';
+        statusMagnitude.textContent = 'Magnitude: \u2014';
+        statusGroups.textContent = 'Groups: \u2014';
+        wordCountEl.textContent = '';
+        return;
+      }
+      var clean = sanitize(raw);
+      var isNeg = clean.charAt(0) === '-';
+      var absStr = isNeg ? clean.slice(1) : clean;
+      var negPrefix = isNeg ? 'Negative ' : '';
+      var negSymbol = isNeg ? '\u2212' : '';
+
+      // Formatted
+      formattedOut.textContent = negSymbol + commaNumber(absStr);
+
+      // Abbreviated (HTML for styled magnitude labels)
+      var abbrName = sayName(absStr);
+      abbreviatedOut.innerHTML = (isNeg ? '<span class="neg">Negative</span> ' : '') + abbrName;
+
+      // Full English name
+      var fullName = negPrefix + sayFullName(absStr);
+      fullNameOut.textContent = fullName;
+
+      // Word count for long names
+      var words = fullName.split(/\s+/).length;
+      wordCountEl.textContent = words > 10 ? words + ' words' : '';
+
+      // Status bar
+      statusDigits.textContent = 'Digits: ' + absStr.length;
+      statusMagnitude.textContent = 'Magnitude: ' + getMagnitude(absStr.length);
+      var groupCount = Math.ceil(absStr.length / 3);
+      statusGroups.textContent = 'Groups: ' + groupCount;
+    }
+
+    /* ═══════════════════════════════════════════
+       EVENT WIRING
+       ═══════════════════════════════════════════ */
+    numInput.addEventListener('input', update);
+
+    // Toggle group for random size
+    var sizeBtns = document.querySelectorAll('#sizeGroup .tog-btn');
+    sizeBtns.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        sizeBtns.forEach(function(b) { b.classList.remove('on'); });
+        btn.classList.add('on');
+        randomSize = parseInt(btn.dataset.value);
+      });
+    });
+
+    // Random button
+    document.getElementById('randomBtn').addEventListener('click', function() {
+      numInput.value = randomNumber(randomSize);
+      update();
+    });
+
+    // Seed with an example on load
+    numInput.value = '4838372921393812345949482810389484717124393813848471201638000883876727657';
+    update();
+    </script>
+  </div>
+</BaseLayout>
+
+<style>
+  .tool-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .anim-in {
+    animation: fadeUp 0.5s ease both;
+    animation-delay: var(--delay, 0s);
+  }
+  .info-banner {
+    border-left: 3px solid var(--accent);
+    padding: 1.25rem 1.5rem;
+    background: var(--accent-glow);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  }
+  .info-banner p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.7;
+    margin: 0;
+  }
+  .info-banner strong {
+    color: var(--text);
+  }
+
+  /* ── Input section ── */
+  .input-section {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.75rem;
+  }
+  .num-input {
+    width: 100%;
+    font-family: var(--font-mono);
+    font-size: 1.1rem;
+    color: var(--text);
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.85rem 1rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+  }
+  .num-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.08);
+  }
+  .num-input::placeholder {
+    color: var(--text-dim);
+  }
+  .controls-row {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    margin-top: 1.25rem;
+  }
+  .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .random-group {
+    margin-left: auto;
+  }
+  .control-label {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .toggle-group {
+    display: flex;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+  }
+  .input-section :global(.tog-btn) {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.35rem 0.7rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+    line-height: 1.2;
+  }
+  .input-section :global(.tog-btn:hover) {
+    color: var(--text-muted);
+    border-color: var(--text-dim);
+  }
+  .input-section :global(.tog-btn.on) {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-glow);
+    box-shadow: 0 0 8px var(--accent-glow);
+  }
+  .input-section :global(.act-btn) {
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.4rem 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .input-section :global(.act-btn:hover) {
+    border-color: var(--accent);
+    color: var(--accent-hover);
+  }
+  .input-section :global(.act-btn.accent) {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-glow);
+  }
+  .input-section :global(.act-btn.accent:hover) {
+    background: var(--accent-glow-strong);
+    box-shadow: 0 0 12px var(--accent-glow);
+  }
+
+  /* ── Status bar ── */
+  .status-bar {
+    display: flex;
+    gap: 1.5rem;
+    padding-top: 1rem;
+    margin-top: 1.25rem;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .status-item {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    letter-spacing: 0.02em;
+  }
+
+  /* ── Output section ── */
+  .output-section {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .output-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .output-block + .output-block {
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  .output-label {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .word-count {
+    font-size: 0.65rem;
+    color: var(--accent);
+    opacity: 0.6;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .output-value {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    line-height: 1.7;
+    word-break: break-word;
+  }
+  .output-value.mono {
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .output-value.full-name {
+    max-height: 300px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .output-value.full-name::-webkit-scrollbar {
+    width: 4px;
+  }
+  .output-value.full-name::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 2px;
+  }
+
+  /* Styled magnitude labels in abbreviated output */
+  .output-section :global(.mag) {
+    color: var(--accent);
+    opacity: 0.8;
+  }
+  .output-section :global(.neg) {
+    color: #f87171;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .controls-row {
+      gap: 1rem;
+    }
+    .random-group {
+      margin-left: 0;
+    }
+    .status-bar {
+      gap: 1rem;
+    }
+  }
+  @media (max-width: 480px) {
+    .input-section {
+      padding: 1.25rem;
+    }
+    .output-section {
+      padding: 1.25rem;
+    }
+    .num-input {
+      font-size: 0.95rem;
+    }
+  }
+</style>
