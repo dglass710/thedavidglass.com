@@ -6,12 +6,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   <div class="container">
     <div class="page-header">
       <h1>Arbitrary Ints</h1>
-      <p>Enter any integer — no matter how large — and see it named in English.</p>
+      <p>Explore how Python represents integers of any size — and see them named in English.</p>
     </div>
 
     <div class="tool-panel">
       <div class="info-banner anim-in" style="--delay: 0.05s">
-        <p>Most languages cap integers at 64 bits — roughly <strong>18.4 quintillion</strong>. Python doesn't. Its arbitrary-precision integers grow as large as memory allows. Originally built as a Flask app, this tool names any integer up to a <strong>Centillion</strong> (10<sup>303</sup>) — a one followed by 303 zeros.</p>
+        <p>Most languages cap integers at 64 bits — roughly <strong>18.4 quintillion</strong>. Python doesn't. Its arbitrary-precision integers grow as large as memory allows. This tool breaks down any integer up to a <strong>Centillion</strong> (10<sup>303</sup>) — a one followed by 303 zeros — showing how it's stored internally and what it's called in English.</p>
       </div>
 
       <div class="tool-section input-section anim-in" style="--delay: 0.1s">
@@ -35,14 +35,14 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         <div class="status-bar">
           <span class="status-item" id="statusDigits">Digits: —</span>
           <span class="status-item" id="statusMagnitude">Magnitude: —</span>
-          <span class="status-item" id="statusGroups">Groups: —</span>
+          <span class="status-item" id="statusGroups">Comma Groups: —</span>
         </div>
       </div>
 
       <div class="tool-section internal-section anim-in" style="--delay: 0.15s">
-        <div class="section-intro">CPython stores arbitrary integers as arrays of base 2<sup>30</sup> digits — each element holds a value from 0 to 1,073,741,823.</div>
+        <div class="section-intro">CPython stores arbitrary integers as arrays of base 2<sup>30</sup> digits — each element holds a value from 0 to 1,073,741,823. Why 2<sup>30</sup>? Each digit fits in a 32-bit word, and multiplying two of them stays within 64 bits — so the CPU handles arbitrary-precision math using native register operations.</div>
         <div class="output-block">
-          <div class="output-label">Digit Array</div>
+          <div class="output-label">Base 2<sup>30</sup> Digits</div>
           <div class="output-value mono" id="digitArrayOutput">&mdash;</div>
         </div>
         <div class="output-block">
@@ -53,11 +53,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
       <div class="tool-section output-section anim-in" style="--delay: 0.2s">
         <div class="output-block">
-          <div class="output-label">Formatted</div>
+          <div class="output-label">Comma Notation</div>
           <div class="output-value mono" id="formattedOutput">—</div>
         </div>
         <div class="output-block">
-          <div class="output-label">Place Values</div>
+          <div class="output-label">Abbreviated</div>
           <div class="output-value" id="abbreviatedOutput">—</div>
         </div>
         <div class="output-block">
@@ -298,7 +298,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         fullNameOut.textContent = '\u2014';
         statusDigits.textContent = 'Digits: \u2014';
         statusMagnitude.textContent = 'Magnitude: \u2014';
-        statusGroups.textContent = 'Groups: \u2014';
+        statusGroups.textContent = 'Comma Groups: \u2014';
         wordCountEl.textContent = '';
         digitArrayOut.textContent = '\u2014';
         expansionOut.innerHTML = '\u2014';
@@ -334,7 +334,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       statusDigits.textContent = 'Digits: ' + absStr.length;
       statusMagnitude.textContent = 'Magnitude: ' + getMagnitude(absStr.length);
       var groupCount = Math.ceil(absStr.length / 3);
-      statusGroups.textContent = 'Groups: ' + groupCount;
+      statusGroups.textContent = 'Comma Groups: ' + groupCount;
     }
 
     /* ═══════════════════════════════════════════
