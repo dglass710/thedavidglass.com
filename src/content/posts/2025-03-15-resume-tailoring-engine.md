@@ -8,7 +8,7 @@ categories: ["projects"]
 
 ## Overview
 
-I built a desktop application that treats resume content as structured data. Instead of rewriting a resume for every job application, I maintain a single database of my real qualifications — objectives, projects, competencies, experience — and the tool selects and orders the most relevant items for each role. The AI doesn't write anything. It curates.
+I built a desktop application that treats resume content as structured data. Instead of rewriting a resume for every job application, I maintain a single database of my qualifications — objectives, projects, competencies, experience — and the tool selects and orders the most relevant items for each role. The AI doesn't write anything. It curates.
 
 The project includes a full Tkinter GUI, a command-line interface, cross-platform builds, and a two-stage AI selection pipeline that calls OpenRouter's API.
 
@@ -16,7 +16,7 @@ The project includes a full Tkinter GUI, a command-line interface, cross-platfor
 
 Every job posting emphasizes different skills. A security engineer role cares about penetration testing and vulnerability assessment. A systems administrator role cares about infrastructure and automation. The underlying experience is the same — the presentation should differ.
 
-Manually editing a resume for each application is tedious and error-prone. Copy-pasting from ChatGPT produces generic content that doesn't reflect real experience. I wanted something in between: a system where I write all the content once, accurately, and the tool handles the selection and ordering.
+Manually editing a resume for each job application is tedious and error-prone. Copy-pasting from ChatGPT produces generic content that doesn't reflect real experience. I wanted something in between: a system where I write all the content once, accurately, and the tool handles the selection and ordering.
 
 ## Architecture
 
