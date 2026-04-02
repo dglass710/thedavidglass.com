@@ -35,7 +35,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
           <button class="qs-btn" data-bases="2,3,4,5,6,7,8,9,10,11,12,13,14,15,16">1–16</button>
         </div>
 
-        <div class="checkbox-grid" id="baseCheckboxes"></div>
+        <div class="base-grid" id="baseButtons"></div>
       </div>
 
       <div class="tool-section table-section anim-in" style="--delay: 0.15s">
@@ -138,33 +138,33 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     color: var(--accent);
     background: var(--accent-glow);
   }
-  .checkbox-grid {
+  .base-grid {
     display: flex;
     flex-wrap: wrap;
     gap: 0.35rem;
   }
-  .checkbox-grid label {
-    display: flex;
-    align-items: center;
-    gap: 0.3rem;
+  .base-btn {
     font-family: var(--font-mono);
     font-size: 0.75rem;
-    color: var(--text-muted);
+    color: var(--text-dim);
     background: var(--bg-primary);
     border: 1px solid var(--border);
     border-radius: 4px;
-    padding: 0.25rem 0.5rem;
+    padding: 0.3rem 0.55rem;
     cursor: pointer;
     transition: all 0.15s;
     user-select: none;
+    line-height: 1.2;
   }
-  .checkbox-grid label:has(input:checked) {
+  .base-btn:hover {
+    color: var(--text-muted);
+    border-color: var(--text-dim);
+  }
+  .base-btn.on {
     border-color: var(--accent);
     color: var(--accent);
     background: var(--accent-glow);
-  }
-  .checkbox-grid input {
-    display: none;
+    box-shadow: 0 0 6px var(--accent-glow);
   }
   .table-section {
     padding: 0;
@@ -217,19 +217,20 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 </style>
 
 <script is:inline>
-  var DEFAULT_CHECKED = [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16];
+  var DEFAULT_ON = [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16];
 
-  var checkboxContainer = document.getElementById('baseCheckboxes');
+  var baseContainer = document.getElementById('baseButtons');
   for (var i = 1; i <= 36; i++) {
-    var label = document.createElement('label');
-    var cb = document.createElement('input');
-    cb.type = 'checkbox';
-    cb.value = i;
-    cb.id = 'base' + i;
-    if (DEFAULT_CHECKED.indexOf(i) !== -1) cb.checked = true;
-    label.appendChild(cb);
-    label.appendChild(document.createTextNode('B' + i));
-    checkboxContainer.appendChild(label);
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'base-btn' + (DEFAULT_ON.indexOf(i) !== -1 ? ' on' : '');
+    btn.dataset.base = i;
+    btn.textContent = 'B' + i;
+    btn.addEventListener('click', function() {
+      this.classList.toggle('on');
+      qsBtns.forEach(function(b) { b.classList.remove('active'); });
+    });
+    baseContainer.appendChild(btn);
   }
 
   // Quick select with active state
@@ -237,26 +238,26 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   qsBtns.forEach(function(btn) {
     btn.addEventListener('click', function() {
       var val = btn.dataset.bases;
-      var cbs = checkboxContainer.querySelectorAll('input');
+      var baseBtns = baseContainer.querySelectorAll('.base-btn');
 
-      // Clear active from all qs buttons
       qsBtns.forEach(function(b) { b.classList.remove('active'); });
       btn.classList.add('active');
 
       if (val === 'all') {
-        cbs.forEach(function(cb) { cb.checked = true; });
+        baseBtns.forEach(function(b) { b.classList.add('on'); });
       } else if (val === 'none') {
-        cbs.forEach(function(cb) { cb.checked = false; });
+        baseBtns.forEach(function(b) { b.classList.remove('on'); });
       } else {
         var bases = val.split(',').map(Number);
-        cbs.forEach(function(cb) { cb.checked = bases.indexOf(parseInt(cb.value)) !== -1; });
+        baseBtns.forEach(function(b) {
+          if (bases.indexOf(parseInt(b.dataset.base)) !== -1) {
+            b.classList.add('on');
+          } else {
+            b.classList.remove('on');
+          }
+        });
       }
     });
-  });
-
-  // Clear qs active state when user manually toggles a checkbox
-  checkboxContainer.addEventListener('change', function() {
-    qsBtns.forEach(function(b) { b.classList.remove('active'); });
   });
 
   function toBase(n, b) {
@@ -274,8 +275,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   function generateTable() {
     var min = parseInt(document.getElementById('minValue').value) || 0;
     var max = parseInt(document.getElementById('maxValue').value) || 16;
-    var selected = Array.from(checkboxContainer.querySelectorAll('input:checked'))
-      .map(function(cb) { return parseInt(cb.value); })
+    var selected = Array.from(baseContainer.querySelectorAll('.base-btn.on'))
+      .map(function(b) { return parseInt(b.dataset.base); })
       .sort(function(a, b) { return a - b; });
 
     if (selected.length === 0) {
