@@ -1,0 +1,48 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const tools = [
+  {
+    title: 'Password Lab',
+    href: '/tools/passwords',
+    description: 'Generate secure passwords and instantly analyze their strength. Uses cryptographic randomness.',
+  },
+  {
+    title: 'Encryption Suite',
+    href: '/tools/encryption',
+    description: 'Encrypt and decrypt messages with AES symmetric or RSA asymmetric encryption. Generate RSA key pairs on the fly.',
+  },
+  {
+    title: 'Base Converter',
+    href: '/tools/base-converter',
+    description: 'Convert numbers between bases 1 through 36. Generate comparison tables for any range.',
+  },
+];
+---
+
+<BaseLayout title="Tools | David Glass">
+  <div class="container">
+    <div class="page-header">
+      <h1>Tools</h1>
+      <p>Interactive utilities for passwords, encryption, and number systems.</p>
+    </div>
+    <div class="card-grid">
+      {tools.map((tool) => (
+        <a href={tool.href} class="tool-card card">
+          <h3>{tool.title}</h3>
+          <p class="excerpt">{tool.description}</p>
+        </a>
+      ))}
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .tool-card {
+    text-decoration: none;
+    color: inherit;
+  }
+  .tool-card:hover h3 {
+    color: var(--accent-hover);
+  }
+</style>

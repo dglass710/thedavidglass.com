@@ -1,0 +1,263 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Base Converter | David Glass">
+  <div class="container">
+    <div class="page-header">
+      <h1>Base Converter</h1>
+      <p>Convert numbers between bases 1 through 36. Generate comparison tables for any range.</p>
+    </div>
+
+    <div class="tool-panel">
+      <div class="tool-section prose-compact">
+        <p>We use base 10 (decimal) daily, but computing relies on other bases. <strong>Binary (base 2)</strong> represents the on/off states of circuits. <strong>Octal (base 8)</strong> compacts three binary digits into one. <strong>Hexadecimal (base 16)</strong> represents a full byte in just two characters — more readable and less error-prone than eight binary digits.</p>
+      </div>
+
+      <div class="tool-section">
+        <h2>Settings</h2>
+        <div class="range-row">
+          <div class="field">
+            <label for="minValue">Min Value</label>
+            <input type="number" id="minValue" value="0" min="0" />
+          </div>
+          <div class="field">
+            <label for="maxValue">Max Value</label>
+            <input type="number" id="maxValue" value="16" min="0" />
+          </div>
+          <button class="btn btn-primary" id="generateBtn">Generate Table</button>
+        </div>
+
+        <div class="quick-select">
+          <button class="qs-btn" data-bases="2,8,10,16">Common</button>
+          <button class="qs-btn" data-bases="all">All</button>
+          <button class="qs-btn" data-bases="none">None</button>
+          <button class="qs-btn" data-bases="2,3,4,5,6,7,8,9,10,11,12,13,14,15,16">1–16</button>
+        </div>
+
+        <div class="checkbox-grid" id="baseCheckboxes"></div>
+      </div>
+
+      <div class="tool-section table-wrapper">
+        <div id="tableContainer"></div>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .tool-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .tool-section {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.75rem;
+  }
+  .tool-section h2 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text);
+  }
+  .prose-compact p {
+    color: var(--text-muted);
+    font-size: 0.925rem;
+    line-height: 1.7;
+    margin: 0;
+  }
+  .prose-compact strong {
+    color: var(--text);
+  }
+  .range-row {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+  }
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .field label {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .field input[type="number"] {
+    width: 100px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    padding: 0.6rem 0.85rem;
+    font-size: 0.9rem;
+  }
+  .quick-select {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+  .qs-btn {
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    padding: 0.4rem 0.85rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .qs-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent-hover);
+  }
+  .checkbox-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+  .checkbox-grid label {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.3rem 0.55rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .checkbox-grid label:has(input:checked) {
+    border-color: var(--accent);
+    color: var(--accent-hover);
+    background: var(--accent-glow);
+  }
+  .checkbox-grid input {
+    display: none;
+  }
+  .table-wrapper {
+    overflow-x: auto;
+    padding: 1rem;
+  }
+  .table-wrapper table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.85rem;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+  }
+  .table-wrapper th,
+  .table-wrapper td {
+    padding: 0.45rem 0.65rem;
+    text-align: center;
+    border: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  .table-wrapper th {
+    background: var(--bg-surface-hover);
+    color: var(--text);
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+  .table-wrapper td {
+    color: var(--text-muted);
+  }
+  .table-wrapper td.val-col {
+    color: var(--accent-hover);
+    font-weight: 600;
+    background: var(--accent-glow);
+  }
+  .table-wrapper tr:hover td {
+    background: var(--bg-surface-hover);
+  }
+  .table-wrapper tr:hover td.val-col {
+    background: var(--accent-glow);
+  }
+</style>
+
+<script is:inline>
+  const DEFAULT_CHECKED = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16];
+
+  // Generate checkboxes
+  const checkboxContainer = document.getElementById('baseCheckboxes');
+  for (let i = 1; i <= 36; i++) {
+    const label = document.createElement('label');
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.value = i;
+    cb.id = 'base' + i;
+    if (DEFAULT_CHECKED.includes(i)) cb.checked = true;
+    label.appendChild(cb);
+    label.appendChild(document.createTextNode('B' + i));
+    checkboxContainer.appendChild(label);
+  }
+
+  // Quick select
+  document.querySelectorAll('.qs-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const val = btn.dataset.bases;
+      const cbs = checkboxContainer.querySelectorAll('input');
+      if (val === 'all') {
+        cbs.forEach(cb => cb.checked = true);
+      } else if (val === 'none') {
+        cbs.forEach(cb => cb.checked = false);
+      } else {
+        const bases = val.split(',').map(Number);
+        cbs.forEach(cb => cb.checked = bases.includes(parseInt(cb.value)));
+      }
+    });
+  });
+
+  // Base conversion
+  function toBase(n, b) {
+    const digits = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    if (b === 1) return '0'.repeat(n + 1);
+    if (n === 0) return '0';
+    let res = '';
+    while (n > 0) {
+      res = digits[n % b] + res;
+      n = Math.floor(n / b);
+    }
+    return res;
+  }
+
+  function generateTable() {
+    const min = parseInt(document.getElementById('minValue').value) || 0;
+    const max = parseInt(document.getElementById('maxValue').value) || 16;
+    const selected = Array.from(checkboxContainer.querySelectorAll('input:checked'))
+      .map(cb => parseInt(cb.value))
+      .sort((a, b) => a - b);
+
+    if (selected.length === 0) {
+      document.getElementById('tableContainer').innerHTML = '<p style="color: var(--text-dim)">Select at least one base.</p>';
+      return;
+    }
+
+    let html = '<table><thead><tr><th>Value</th>';
+    selected.forEach(b => html += '<th>Base ' + b + '</th>');
+    html += '</tr></thead><tbody>';
+
+    for (let v = min; v <= max; v++) {
+      html += '<tr><td class="val-col">' + v + '</td>';
+      selected.forEach(b => html += '<td>' + toBase(v, b) + '</td>');
+      html += '</tr>';
+    }
+    html += '</tbody></table>';
+    document.getElementById('tableContainer').innerHTML = html;
+  }
+
+  document.getElementById('generateBtn').addEventListener('click', generateTable);
+  generateTable();
+</script>

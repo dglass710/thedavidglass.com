@@ -1,0 +1,380 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Encryption Suite | David Glass">
+  <div class="container">
+    <div class="page-header">
+      <h1>Encryption Suite</h1>
+      <p>Encrypt and decrypt messages with AES or RSA. Everything runs locally in your browser.</p>
+    </div>
+
+    <div class="tool-panel">
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="symmetric">Symmetric (AES)</button>
+        <button class="tab-btn" data-tab="asymmetric">Asymmetric (RSA)</button>
+      </div>
+
+      <!-- Symmetric Tab -->
+      <div class="tab-content active" id="tab-symmetric">
+        <div class="tool-section">
+          <p class="tool-note">AES uses a shared key for both encryption and decryption. Anyone with the key can decrypt the message.</p>
+          <div class="field">
+            <label>Key Size</label>
+            <select id="aes-key-size">
+              <option value="128">128 bits</option>
+              <option value="192">192 bits</option>
+              <option value="256" selected>256 bits</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Key</label>
+            <div class="input-row">
+              <input type="text" id="aes-key" placeholder="Enter or generate a key" />
+              <button class="action-btn" id="aes-gen-key">Generate</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>Message</label>
+            <textarea id="aes-message" placeholder="Enter text to encrypt or ciphertext to decrypt" rows="3"></textarea>
+          </div>
+          <div class="button-row">
+            <button class="btn btn-primary" id="aes-encrypt">Encrypt</button>
+            <button class="btn btn-outline" id="aes-decrypt">Decrypt</button>
+          </div>
+          <div class="field">
+            <label>Output</label>
+            <div class="input-row">
+              <textarea id="aes-output" readonly rows="3" placeholder="Result will appear here"></textarea>
+              <button class="action-btn copy-btn" data-target="aes-output">Copy</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Asymmetric Tab -->
+      <div class="tab-content" id="tab-asymmetric">
+        <div class="tool-section">
+          <p class="tool-note">RSA uses a key pair: encrypt with the public key, decrypt with the private key. Generate a pair below or paste your own.</p>
+
+          <h3>Key Pair</h3>
+          <div class="field">
+            <label>Key Size</label>
+            <div class="input-row">
+              <select id="rsa-key-size">
+                <option value="1024">RSA 1024-bit</option>
+                <option value="2048" selected>RSA 2048-bit</option>
+                <option value="4096">RSA 4096-bit</option>
+              </select>
+              <button class="btn btn-primary" id="rsa-gen-keys">Generate Key Pair</button>
+            </div>
+          </div>
+          <div id="rsa-loading" class="tool-note" style="display:none; color: var(--accent-hover);">Generating keys...</div>
+          <div id="rsa-warning" class="tool-note" style="display:none; color: #f97316;">4096-bit keys may take several seconds to generate.</div>
+          <div class="field">
+            <label>Public Key</label>
+            <div class="input-row">
+              <textarea id="rsa-public-key" rows="2" placeholder="Public key will appear here"></textarea>
+              <button class="action-btn copy-btn" data-target="rsa-public-key">Copy</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>Private Key</label>
+            <div class="input-row">
+              <textarea id="rsa-private-key" rows="2" placeholder="Private key will appear here" style="-webkit-text-security: disc; font-family: sans-serif;"></textarea>
+              <div class="btn-stack">
+                <button class="action-btn" id="rsa-toggle-vis">Show</button>
+                <button class="action-btn copy-btn" data-target="rsa-private-key">Copy</button>
+              </div>
+            </div>
+          </div>
+
+          <hr class="divider" />
+
+          <h3>Encrypt</h3>
+          <div class="field">
+            <label>Message</label>
+            <textarea id="rsa-enc-message" placeholder="Enter text to encrypt with the public key" rows="2"></textarea>
+          </div>
+          <button class="btn btn-primary" id="rsa-encrypt" style="width:100%; margin-bottom:1rem;">Encrypt</button>
+          <div class="field">
+            <label>Encrypted Output</label>
+            <div class="input-row">
+              <textarea id="rsa-enc-output" readonly rows="2" placeholder="Encrypted result"></textarea>
+              <button class="action-btn copy-btn" data-target="rsa-enc-output">Copy</button>
+            </div>
+          </div>
+
+          <hr class="divider" />
+
+          <h3>Decrypt</h3>
+          <div class="field">
+            <label>Encrypted Message</label>
+            <textarea id="rsa-dec-message" placeholder="Paste encrypted text to decrypt with the private key" rows="2"></textarea>
+          </div>
+          <button class="btn btn-outline" id="rsa-decrypt" style="width:100%; margin-bottom:1rem;">Decrypt</button>
+          <div class="field">
+            <label>Decrypted Output</label>
+            <div class="input-row">
+              <textarea id="rsa-dec-output" readonly rows="2" placeholder="Decrypted result"></textarea>
+              <button class="action-btn copy-btn" data-target="rsa-dec-output">Copy</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .tool-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .tab-bar {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+  }
+  .tab-btn {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-muted);
+    padding: 0.75rem 1.5rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tab-btn:hover {
+    color: var(--text);
+  }
+  .tab-btn.active {
+    color: var(--accent-hover);
+    border-bottom-color: var(--accent);
+  }
+  .tab-content {
+    display: none;
+  }
+  .tab-content.active {
+    display: block;
+  }
+  .tool-section {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.75rem;
+  }
+  .tool-section h3 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text);
+  }
+  .tool-note {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin-bottom: 1.25rem;
+  }
+  .field {
+    margin-bottom: 1rem;
+  }
+  .field label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin-bottom: 0.35rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .field select,
+  .field input[type="text"],
+  .field input[type="password"],
+  .field textarea {
+    width: 100%;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    padding: 0.65rem 0.85rem;
+    font-size: 0.9rem;
+    font-family: inherit;
+    resize: vertical;
+  }
+  .field textarea {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.85rem;
+  }
+  .field select {
+    cursor: pointer;
+  }
+  .field input::placeholder,
+  .field textarea::placeholder {
+    color: var(--text-dim);
+  }
+  .input-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: stretch;
+  }
+  .input-row input,
+  .input-row textarea,
+  .input-row select {
+    flex: 1;
+    min-width: 0;
+  }
+  .action-btn {
+    background: var(--bg-surface-hover);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    padding: 0.65rem 1rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    transition: all 0.2s;
+    align-self: flex-start;
+  }
+  .action-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent-hover);
+  }
+  .btn-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .button-row {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  .button-row .btn {
+    flex: 1;
+  }
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 1.75rem 0;
+  }
+  @media (max-width: 640px) {
+    .input-row {
+      flex-direction: column;
+    }
+  }
+</style>
+
+<script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/jsencrypt/3.2.1/jsencrypt.min.js"></script>
+<script is:inline>
+  // Tab switching
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  // Copy buttons
+  document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const target = document.getElementById(this.dataset.target);
+      const text = target.value || target.textContent;
+      if (!text) return;
+      navigator.clipboard.writeText(text).then(() => {
+        const orig = this.textContent;
+        this.textContent = 'Copied!';
+        setTimeout(() => this.textContent = orig, 1500);
+      });
+    });
+  });
+
+  // --- AES ---
+  document.getElementById('aes-gen-key').addEventListener('click', () => {
+    const size = parseInt(document.getElementById('aes-key-size').value);
+    const key = CryptoJS.lib.WordArray.random(size / 8).toString(CryptoJS.enc.Hex);
+    document.getElementById('aes-key').value = key;
+  });
+
+  document.getElementById('aes-encrypt').addEventListener('click', () => {
+    const key = document.getElementById('aes-key').value;
+    const msg = document.getElementById('aes-message').value;
+    if (!key) { alert('Please enter or generate a key.'); return; }
+    if (!msg) { alert('Please enter a message.'); return; }
+    document.getElementById('aes-output').value = CryptoJS.AES.encrypt(msg, key).toString();
+  });
+
+  document.getElementById('aes-decrypt').addEventListener('click', () => {
+    const key = document.getElementById('aes-key').value;
+    const msg = document.getElementById('aes-message').value;
+    if (!key) { alert('Please enter a key.'); return; }
+    if (!msg) { alert('Please enter ciphertext.'); return; }
+    try {
+      const result = CryptoJS.AES.decrypt(msg, key).toString(CryptoJS.enc.Utf8);
+      document.getElementById('aes-output').value = result || '(decryption failed — wrong key or corrupted input)';
+    } catch {
+      document.getElementById('aes-output').value = '(decryption failed — wrong key or corrupted input)';
+    }
+  });
+
+  // --- RSA ---
+  let storedPrivateKey = '';
+
+  document.getElementById('rsa-key-size').addEventListener('change', function() {
+    document.getElementById('rsa-warning').style.display = this.value === '4096' ? 'block' : 'none';
+  });
+
+  document.getElementById('rsa-gen-keys').addEventListener('click', () => {
+    const size = document.getElementById('rsa-key-size').value;
+    const loading = document.getElementById('rsa-loading');
+    loading.style.display = 'block';
+    setTimeout(() => {
+      const crypt = new JSEncrypt({ default_key_size: size });
+      crypt.getKey();
+      document.getElementById('rsa-public-key').value = crypt.getPublicKey();
+      storedPrivateKey = crypt.getPrivateKey();
+      document.getElementById('rsa-private-key').value = storedPrivateKey;
+      loading.style.display = 'none';
+    }, 50);
+  });
+
+  document.getElementById('rsa-toggle-vis').addEventListener('click', function() {
+    const pk = document.getElementById('rsa-private-key');
+    if (pk.style.webkitTextSecurity === 'disc') {
+      pk.style.webkitTextSecurity = 'none';
+      pk.style.fontFamily = "'SF Mono', 'Fira Code', monospace";
+      this.textContent = 'Hide';
+    } else {
+      pk.style.webkitTextSecurity = 'disc';
+      pk.style.fontFamily = 'sans-serif';
+      this.textContent = 'Show';
+    }
+  });
+
+  document.getElementById('rsa-encrypt').addEventListener('click', () => {
+    const key = document.getElementById('rsa-public-key').value;
+    const msg = document.getElementById('rsa-enc-message').value;
+    if (!key) { alert('Please generate or enter a public key.'); return; }
+    if (!msg) { alert('Please enter a message.'); return; }
+    const crypt = new JSEncrypt();
+    crypt.setPublicKey(key);
+    const encrypted = crypt.encrypt(msg);
+    document.getElementById('rsa-enc-output').value = encrypted || '(encryption failed — message may be too long for key size)';
+  });
+
+  document.getElementById('rsa-decrypt').addEventListener('click', () => {
+    const key = document.getElementById('rsa-private-key').value || storedPrivateKey;
+    const msg = document.getElementById('rsa-dec-message').value;
+    if (!key) { alert('Please generate or enter a private key.'); return; }
+    if (!msg) { alert('Please enter encrypted text.'); return; }
+    const crypt = new JSEncrypt();
+    crypt.setPrivateKey(key);
+    const decrypted = crypt.decrypt(msg);
+    document.getElementById('rsa-dec-output').value = decrypted || '(decryption failed — wrong key or corrupted input)';
+  });
+</script>
