@@ -7,9 +7,25 @@ const SHOW_PHOTO = true;
 
 const allPosts = await getCollection('posts', ({ data }) => !data.draft);
 
+const projectOrder = [
+  'devsecops-security-pipeline',
+  'have-i-been-pwned-offline-project',
+  'resume-tailoring-engine',
+  'custom-agent-toolkit',
+  'three-day-cybersecurity-challenge',
+  'web-application-penetration-testing-project',
+  'azure-cloud-architecture-project-secure-web-application-deployment',
+  'linux-ctf-privilege-escalation',
+];
+
 const caseStudies = allPosts
   .filter((p) => p.data.categories?.includes('projects'))
-  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+  .sort((a, b) => {
+    const aIdx = projectOrder.indexOf(a.data.slug);
+    const bIdx = projectOrder.indexOf(b.data.slug);
+    return (aIdx === -1 ? 999 : aIdx) - (bIdx === -1 ? 999 : bIdx);
+  })
+  .slice(0, 3);
 
 const devSeries = allPosts
   .filter((p) => p.data.categories?.includes('Bootcamp Blog'))
