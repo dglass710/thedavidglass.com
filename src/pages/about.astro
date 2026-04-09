@@ -1,18 +1,28 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+
+// Set to true and place a headshot image at public/images/headshot.webp
+const SHOW_PHOTO = false;
 ---
 
 <BaseLayout title="About | David Glass" description="About David Glass — software developer specializing in cybersecurity, penetration testing, and cloud security architecture.">
   <div class="container">
     <div class="page-header">
-      <h1>About Me</h1>
+      <h1>About</h1>
     </div>
 
-    <div class="about-section">
-      <h2>Who I Am</h2>
-      <p>
-        I'm David Glass, a software developer turned cybersecurity professional based in Chicago. I spent years building software — iOS apps, desktop tools, web apps, mathematical research projects — before shifting my focus to security. I completed Northwestern's cybersecurity program, where I trained in penetration testing, network defense, and threat analysis. Offensive security is where I do my best work: finding vulnerabilities before someone else does.
-      </p>
+    <div class={SHOW_PHOTO ? 'about-intro-split' : 'about-section'}>
+      {SHOW_PHOTO && (
+        <div class="about-photo">
+          <img src="/images/headshot.webp" alt="David Glass" />
+        </div>
+      )}
+      <div>
+        <h2>Who I Am</h2>
+        <p>
+          I'm David Glass, a software developer turned cybersecurity professional based in Chicago. I spent years building software — iOS apps, desktop tools, web apps, mathematical research projects — before shifting my focus to security. I completed Northwestern's cybersecurity program, where I trained in penetration testing, network defense, and threat analysis. Offensive security is where I do my best work: finding vulnerabilities before someone else does.
+        </p>
+      </div>
     </div>
 
     <div class="about-section">

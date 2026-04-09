@@ -3,20 +3,26 @@ title: "Web Application Penetration Testing Project"
 date: 2024-04-04
 slug: "web-application-penetration-testing-project"
 type: post
+description: "Pentest plus CTF — every finding had to be exploited offensively, not just documented."
 categories: ["projects"]
 ---
 
-## Project Overview
+## Overview
 
-Over three days, I conducted penetration tests on demo web applications and competed in a related Capture the Flag event. The CTF was built into the same engagement — after testing the web apps, the scavenger hunt challenged me to chain together the techniques I'd used (password cracking, log analysis, file permission hunting) under time pressure. The goal across both was to identify common security vulnerabilities, exploit them, and recommend fixes.
+A three-day engagement combining penetration testing of demo web applications with a Capture the Flag event built on top of the same vulnerabilities. The CTF forced me to apply each finding offensively under time pressure — cracking passwords, chaining log analysis into file access, hunting through permissions for hidden data.
 
-## Process and Key Findings
+## Reconnaissance and Exploitation
 
-1. **Reconnaissance and Scanning:** I used Burp Suite to map the application's attack surface and OWASP ZAP as a man-in-the-middle proxy to inspect and manipulate traffic. I followed up with manual testing — writing specialized scripts and performing manual SQL injections to find issues the automated scans missed.
-2. **Exploitation:** I found SQL injection vulnerabilities that exposed database contents, XSS vulnerabilities that could execute scripts in a user's session, and CSRF vulnerabilities that could force forged requests.
-3. **Flag Discovery and Password Recovery:** I used `ls -Ra` and `cat` to uncover hidden files and passwords, cracked user passwords with John the Ripper and a wordlist, and analyzed log files with `grep` and custom scripts to extract unique IP addresses.
-4. **Reporting and Mitigation:** I documented all findings with descriptions, exploitation steps, and screenshots. I recommended prepared statements and parameterized queries, input sanitization, SameSite cookies, and anti-CSRF tokens on forms.
+I used Burp Suite to map the application's attack surface and OWASP ZAP as a MITM proxy to inspect and manipulate traffic. Manual testing — writing scripts and performing SQL injections by hand — caught issues the automated scans missed.
+
+I found SQL injection through the login form, reflected and stored XSS in multiple endpoints, and CSRF vulnerabilities in form submissions. The SQLi exposed database contents directly; the XSS and CSRF opened session-level attack paths.
+
+## The CTF Component
+
+The scavenger hunt was where the findings mattered. I used `ls -Ra` and `cat` to uncover hidden files and passwords across the filesystem, cracked user passwords with John the Ripper against a targeted wordlist, and analyzed application logs with `grep` and custom scripts to extract unique IP addresses.
+
+The log analysis was the hardest step. Nothing flagged the IP addresses as significant — I had to recognize that addresses buried in log entries were doubling as zip file passwords. That connection was purely manual; no scanner would catch it. The zip files contained credentials for the next stage, so missing this link would have stalled the entire chain.
 
 ## Outcome
 
-What set this engagement apart was the CTF component — it forced me to apply each finding offensively, not just document it. Cracking a hacker's account password, using log analysis to unlock encrypted files, and hunting through file permissions for hidden flags all reinforced the vulnerabilities I'd reported. The log analysis step was the hardest because nothing flagged the IP addresses as significant — I had to recognize that addresses buried in log entries were doubling as zip file passwords, a connection that no scanner would catch.
+What set this engagement apart was the feedback loop between testing and exploitation. Documenting a vulnerability is one thing; actually weaponizing it under time pressure reveals whether you understood it. The CTF made every finding actionable — each reported vulnerability became a tool for the next step.

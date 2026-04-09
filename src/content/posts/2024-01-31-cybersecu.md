@@ -3,12 +3,13 @@ title: "CTF Walkthrough: User to Root in Eight Flags"
 date: 2024-01-31
 slug: "linux-ctf-privilege-escalation"
 type: post
+description: "Eight flags. Unprivileged user to root. Each account unlocked the next."
 categories: ["projects"]
 ---
 
-## Project Overview
+## Overview
 
-A CTF-style scavenger hunt with eight flags hidden across a Linux system. Each task built on the previous one — credentials from one step unlocked the next user account, chaining from unprivileged user to root.
+A privilege escalation chain across a Linux system — eight flags, eight user accounts, unprivileged user to root. Each flag's credentials unlocked the next account, and each account required a different technique to crack.
 
 ## Discovering Hidden Files
 
@@ -26,9 +27,9 @@ The third task involved a log file and a zip file in Mitnick's account. I inspec
 
 In babbage's home directory, I needed to find files with specific read and execute permissions. I searched for files with permissions `-r-------x` and found that the file named `stallman` contained the password (`computer`) for the stallman user.
 
-## Filesystem Attention to Detail
+## Script Debugging and Shell Config Inspection
 
-Flags five and six tested attention to detail on the filesystem. The fifth was a faulty bash script (`flag5.sh`) in stallman's home directory with missing quotes around variable expansions and a broken conditional test — fixing the syntax and running it produced the flag. The sixth was hidden in the sysadmin user's `.bashrc` as a custom alias that echoed the flag when invoked, the kind of thing you only catch by inspecting shell configuration files on every account you access.
+Flags five and six tested filesystem attention. The fifth was a faulty bash script (`flag5.sh`) in stallman's home directory with missing quotes around variable expansions and a broken conditional test — fixing the syntax and running it produced the flag. The sixth was hidden in the sysadmin user's `.bashrc` as a custom alias that echoed the flag when invoked.
 
 ## Gaining Root Access
 
@@ -40,4 +41,4 @@ The final task: gather all previously found flags, format them as username:passw
 
 ## Outcome
 
-Every flag required a different skill — file discovery, password cracking, log analysis, permission enumeration, script debugging, shell config inspection, and sudo abuse — but the privilege escalation chain is what tied them together. The hardest step was the `less`-to-root escalation because it required knowing that interactive pagers can spawn shells, something I had read about but never exploited hands-on. If I did this again I would script the enumeration earlier; I manually checked permissions and configs for the first several accounts before writing a reusable checklist, which cost time I could have saved.
+The hardest step was the `less`-to-root escalation — it required knowing that interactive pagers can spawn shells, something I had read about but never tried. If I did this again I would script the enumeration earlier; I manually checked permissions and configs for the first several accounts before writing a reusable checklist, which cost time I could have saved.

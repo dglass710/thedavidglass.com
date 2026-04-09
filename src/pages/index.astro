@@ -2,6 +2,9 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
 
+// Set to true and place a headshot image at public/images/headshot.webp
+const SHOW_PHOTO = false;
+
 const allPosts = await getCollection('posts', ({ data }) => !data.draft);
 
 const caseStudies = allPosts
@@ -13,46 +16,72 @@ const devSeries = allPosts
   .sort((a, b) => a.data.date.getTime() - b.data.date.getTime())
   .slice(0, 4);
 
-function getExcerpt(body: string, length = 150): string {
-  const cleaned = body
-    .replace(/#{1,6}\s/g, '')
-    .replace(/\*\*/g, '')
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-    .replace(/[*_~`]/g, '')
-    .trim();
-  return cleaned.length > length ? cleaned.slice(0, length) + '...' : cleaned;
-}
-
 function formatDate(date: Date): string {
   return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 }
+
+const tools = [
+  { name: 'Password Lab', href: '/tools/passwords', desc: 'Generate and analyze passwords with cryptographic randomness' },
+  { name: 'Encryption Suite', href: '/tools/encryption', desc: 'AES + RSA encryption with key pair generation' },
+  { name: 'Base Converter', href: '/tools/base-converter', desc: 'Convert numbers between any bases 1\u201336' },
+  { name: 'Neural Drive', href: '/tools/neural-drive', desc: 'Neural networks learn to navigate traffic through evolution' },
+  { name: 'Arbitrary Ints', href: '/tools/arbitrary-ints', desc: 'Name any integer up to a centillion' },
+];
 ---
 
 <BaseLayout title="David Glass | Software Developer & Cybersecurity Professional" description="David Glass — software developer and cybersecurity professional. Portfolio of security projects, interactive tools, and development insights.">
-  <section class="hero">
-    <h1>David Glass</h1>
-    <p class="subtitle">software_developer | cybersecurity_professional</p>
-    <p class="tagline">
-      Building secure systems and breaking insecure ones. Based in Chicago, focused on offensive security and software development.
-    </p>
-    <div class="hero-buttons">
-      <a href="/projects" class="btn btn-primary">View Projects</a>
-      <a href="/blog" class="btn btn-outline">Dev Series</a>
+  <section class={`hero ${SHOW_PHOTO ? 'hero-split' : ''}`}>
+    {SHOW_PHOTO && (
+      <div class="hero-photo">
+        <img src="/images/headshot.webp" alt="David Glass" />
+      </div>
+    )}
+    <div class="hero-content">
+      <p class="subtitle"><span class="prompt">~$</span> whoami</p>
+      <h1>David Glass</h1>
+      <p class="tagline">
+        Building secure systems and breaking insecure ones.<br />
+        Offensive security and software development. Chicago.
+      </p>
+      <div class="hero-buttons">
+        <a href="/projects" class="btn btn-primary">View Projects</a>
+        <a href="/tools" class="btn btn-outline">Tools</a>
+      </div>
     </div>
   </section>
 
   <div class="container">
     <section class="section">
       <div class="section-header">
+        <h2>Arsenal</h2>
+        <a href="/tools">All tools &rarr;</a>
+      </div>
+      <div class="tools-grid">
+        {tools.map((tool) => (
+          <a href={tool.href} class="tool-card">
+            <span class="tool-prompt">&gt;</span>
+            <div class="tool-info">
+              <span class="tool-name">{tool.name}</span>
+              <span class="tool-desc">{tool.desc}</span>
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
         <h2>Case Studies</h2>
-        <a href="/blog">View all &rarr;</a>
+        <a href="/projects">View all &rarr;</a>
       </div>
       <div class="card-grid">
         {caseStudies.map((post) => (
           <article class="card">
+            {post.data.description && (
+              <p class="outcome-stat">{post.data.description}</p>
+            )}
             <h3><a href={`/blog/${post.data.slug}`}>{post.data.title}</a></h3>
             <p class="meta">{formatDate(post.data.date)}</p>
-            <p class="excerpt">{getExcerpt(post.body || '', 150)}</p>
           </article>
         ))}
       </div>
@@ -60,7 +89,7 @@ function formatDate(date: Date): string {
 
     <section class="section">
       <div class="section-header">
-        <h2>Cybersecurity Development Series</h2>
+        <h2>Development Series</h2>
         <a href="/blog">View all &rarr;</a>
       </div>
       <div class="card-grid">
@@ -68,7 +97,6 @@ function formatDate(date: Date): string {
           <article class="card">
             <h3><a href={`/blog/${post.data.slug}`}>{post.data.title}</a></h3>
             <p class="meta">{formatDate(post.data.date)}</p>
-            <p class="excerpt">{getExcerpt(post.body || '', 150)}</p>
           </article>
         ))}
       </div>

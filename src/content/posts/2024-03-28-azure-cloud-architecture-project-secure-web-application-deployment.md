@@ -3,29 +3,24 @@ title: "Azure Cloud Architecture Project: Secure Web Application Deployment"
 date: 2024-03-28
 slug: "azure-cloud-architecture-project-secure-web-application-deployment"
 type: post
+description: "Jump box, three web servers, locked-down NSGs. Locked myself out twice getting the rules right."
 categories: ["projects"]
 ---
 
-## Project Overview
+## Overview
 
-I designed and deployed a secure web application architecture on Microsoft Azure. The setup used a jump box provisioner with Ansible to automate configuration management and deploy Docker containers across three web servers.
+The constraint was simple: deploy a web application on Azure where no server has public SSH access and no web server can reach any other web server directly. I designed a layered architecture around a single jump box provisioner, three Dockerized web servers behind a load balancer, and tightly scoped Network Security Group rules.
 
-## Architecture Details
+## Architecture
 
-- **Jump Box Provisioner:** Served as the single entry point for administrative tasks and ran Ansible to automate deployment across all three web servers.
-- **Ansible Configuration Management:** I ran Ansible from the jump box to automate deployment and management of web servers running Docker containers. This kept configurations consistent across all servers.
-- **Docker Containers:** Each web server hosted Docker containers running the web application in isolated environments.
-- **Load Balancer:** I placed a load balancer in front of the three web servers to distribute incoming traffic on ports 80 and 443, keeping the servers themselves off the public internet with no direct inbound routes.
-- **Network Security Groups (NSGs):** Controlled inbound and outbound traffic within the Azure network. I configured NSGs to allow SSH on port 22 only from my home network IP to the jump box, and to permit public HTTP/HTTPS traffic only through the load balancer.
+All administrative access routes through the jump box, which serves as both the SSH entry point and the Ansible control node. From there, I automated deployment of Docker containers across three web servers — each running the application in an isolated environment. A load balancer handles incoming traffic on ports 80 and 443, keeping the web servers off the public internet entirely.
 
-## Security Design
-
-The layered approach — restricted jump box access, isolated Docker containers, and tightly scoped NSG rules — meant that a compromised web server couldn't reach the jump box or other web servers directly. The NSGs blocked all inter-VM SSH traffic except from the jump box, so there was no path from one web server to another without going through the provisioner first.
+The NSGs enforce the security boundaries. SSH on port 22 is allowed only from my home IP to the jump box. The web servers accept HTTP/HTTPS only through the load balancer. All inter-VM SSH traffic is blocked except from the jump box, so there's no lateral path between web servers without going through the provisioner.
 
 ## Challenges
 
 I locked myself out of the jump box twice while tightening the NSG rules. The problem was rule priority ordering — my deny-all rule was evaluating before the allow-SSH rule, so my own IP got blocked. I diagnosed it by checking the NSG effective rules in the Azure portal, which showed the deny hitting first. The fix was reordering the rule priorities so the allow-SSH rule evaluated before the broad deny.
 
-## Outcome
+## What I'd Change
 
-The final architecture — one jump box, three web servers, a load balancer, and scoped NSG rules — maintained a clear security boundary at each layer with no public SSH exposure and no direct routes between web servers.
+The architecture works, but I'd add monitoring. There's no alerting on failed SSH attempts to the jump box or unusual traffic patterns through the load balancer. I'd also move the Ansible playbooks into a Git repo with CI so configuration changes are versioned and auditable — running ad-hoc playbooks from the jump box worked for this project, but it doesn't scale.

@@ -13,6 +13,8 @@
   --text-dim: #8494a7;
   --border: #161b2e;
   --border-hover: #22d3ee33;
+  --accent-warm: #f59e0b;
+  --accent-warm-glow: rgba(245, 158, 11, 0.12);
   --color-danger: #ef4444;
   --color-warning: #f97316;
   --color-caution: #eab308;
@@ -672,6 +674,158 @@ img {
   font-weight: 500;
 }
 
+/* ═══ Hero Split Layout ═══ */
+.hero-split {
+  display: flex;
+  align-items: center;
+  gap: 3rem;
+  text-align: left;
+  max-width: 1100px;
+  padding: 5rem 2rem;
+}
+
+.hero-split::before {
+  background: radial-gradient(circle at 25% 20%, var(--accent-glow-strong) 0%, transparent 50%);
+}
+
+.hero-photo {
+  flex-shrink: 0;
+  width: 260px;
+  animation: fadeUp 0.6s ease 0.1s both;
+}
+
+.hero-photo img {
+  width: 100%;
+  border-radius: var(--radius);
+  border: 2px solid var(--border);
+  box-shadow: 0 0 60px var(--accent-glow), 0 0 0 1px var(--border);
+}
+
+.hero-content {
+  flex: 1;
+}
+
+.hero .prompt {
+  opacity: 0.5;
+}
+
+/* ═══ Outcome Stats ═══ */
+.outcome-stat {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--accent-warm);
+  margin-bottom: 0.75rem;
+  line-height: 1.55;
+  letter-spacing: 0.01em;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ═══ Tools Showcase ═══ */
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.75rem;
+}
+
+.tool-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 1rem 1.25rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+  color: inherit;
+  animation: fadeUp 0.5s ease both;
+}
+
+.tools-grid .tool-card:nth-child(1) { animation-delay: 0.05s; }
+.tools-grid .tool-card:nth-child(2) { animation-delay: 0.1s; }
+.tools-grid .tool-card:nth-child(3) { animation-delay: 0.15s; }
+.tools-grid .tool-card:nth-child(4) { animation-delay: 0.2s; }
+.tools-grid .tool-card:nth-child(5) { animation-delay: 0.25s; }
+
+.tool-card:hover {
+  border-color: var(--accent);
+  background: var(--bg-surface-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(34, 211, 238, 0.08);
+}
+
+.tool-prompt {
+  font-family: var(--font-mono);
+  color: var(--accent);
+  font-weight: 500;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+  opacity: 0.5;
+  transition: opacity 0.25s;
+}
+
+.tool-card:hover .tool-prompt {
+  opacity: 1;
+}
+
+.tool-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.tool-name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--text);
+  display: block;
+  font-size: 0.92rem;
+  margin-bottom: 0.2rem;
+}
+
+.tool-desc {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  display: block;
+  line-height: 1.5;
+}
+
+/* ═══ About Split Layout ═══ */
+.about-intro-split {
+  display: flex;
+  align-items: flex-start;
+  gap: 2.5rem;
+  margin-bottom: 3rem;
+  animation: fadeUp 0.5s ease both;
+}
+
+.about-intro-split h2 {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  letter-spacing: -0.02em;
+}
+
+.about-intro-split p {
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.about-photo {
+  flex-shrink: 0;
+  width: 220px;
+}
+
+.about-photo img {
+  width: 100%;
+  border-radius: var(--radius);
+  border: 2px solid var(--border);
+  box-shadow: 0 0 40px var(--accent-glow);
+}
+
 /* ═══ Animations ═══ */
 @keyframes fadeUp {
   from {
@@ -685,8 +839,29 @@ img {
 }
 
 /* ═══ Responsive ═══ */
+@media (max-width: 768px) {
+  .hero-split {
+    flex-direction: column;
+    text-align: center;
+    padding: 4rem 1.5rem 3rem;
+  }
+  .hero-photo {
+    width: 180px;
+  }
+  .about-intro-split {
+    flex-direction: column;
+  }
+  .about-photo {
+    width: 180px;
+    margin: 0 auto;
+  }
+}
+
 @media (max-width: 640px) {
   .card-grid {
+    grid-template-columns: 1fr;
+  }
+  .tools-grid {
     grid-template-columns: 1fr;
   }
   .hero {
