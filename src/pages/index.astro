@@ -67,24 +67,6 @@ const tools = [
   <div class="container">
     <section class="section">
       <div class="section-header">
-        <h2>Toolbox</h2>
-        <a href="/tools">All tools &rarr;</a>
-      </div>
-      <div class="tools-grid">
-        {tools.map((tool) => (
-          <a href={tool.href} class="tool-card">
-            <span class="tool-prompt">&gt;</span>
-            <div class="tool-info">
-              <span class="tool-name">{tool.name}</span>
-              <span class="tool-desc">{tool.desc}</span>
-            </div>
-          </a>
-        ))}
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="section-header">
         <h2>Case Studies</h2>
         <a href="/projects">View all &rarr;</a>
       </div>
@@ -97,6 +79,24 @@ const tools = [
             <h3><a href={`/blog/${post.data.slug}`}>{post.data.title}</a></h3>
             <p class="meta">{formatDate(post.data.date)}</p>
           </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <h2>Toolbox</h2>
+        <a href="/tools">All tools &rarr;</a>
+      </div>
+      <div class="tools-grid">
+        {tools.map((tool) => (
+          <a href={tool.href} class="tool-card">
+            <span class="tool-prompt">&gt;</span>
+            <div class="tool-info">
+              <span class="tool-name">{tool.name}</span>
+              <span class="tool-desc">{tool.desc}</span>
+            </div>
+          </a>
         ))}
       </div>
     </section>
