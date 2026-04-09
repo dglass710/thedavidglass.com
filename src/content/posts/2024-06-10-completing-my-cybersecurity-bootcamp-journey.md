@@ -1,5 +1,5 @@
 ---
-title: "Completing My Cybersecurity Bootcamp Journey"
+title: "Splunk Tuning, a Capstone Build, and What Changed"
 date: 2024-06-10
 slug: "completing-my-cybersecurity-bootcamp-journey"
 type: post
