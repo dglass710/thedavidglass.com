@@ -5,7 +5,23 @@ import { getCollection } from 'astro:content';
 const posts = await getCollection('posts', ({ data }) =>
   !data.draft && data.categories?.includes('projects')
 );
-const sortedProjects = posts.sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+
+const projectOrder = [
+  'devsecops-security-pipeline',
+  'have-i-been-pwned-offline-project',
+  'resume-tailoring-engine',
+  'custom-agent-toolkit',
+  'three-day-cybersecurity-challenge',
+  'web-application-penetration-testing-project',
+  'azure-cloud-architecture-project-secure-web-application-deployment',
+  'linux-ctf-privilege-escalation',
+];
+
+const sortedProjects = posts.sort((a, b) => {
+  const aIdx = projectOrder.indexOf(a.data.slug);
+  const bIdx = projectOrder.indexOf(b.data.slug);
+  return (aIdx === -1 ? 999 : aIdx) - (bIdx === -1 ? 999 : bIdx);
+});
 
 function formatDate(date: Date): string {
   return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
