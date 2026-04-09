@@ -1,5 +1,5 @@
 ---
-title: "Have I Been Pwned? Offline Project"
+title: "Have I Been Pwned — Offline"
 date: 2024-06-10
 slug: "have-i-been-pwned-offline-project"
 type: post

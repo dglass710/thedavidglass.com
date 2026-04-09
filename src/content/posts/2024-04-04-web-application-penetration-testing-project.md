@@ -1,5 +1,5 @@
 ---
-title: "Web Application Penetration Testing Project"
+title: "Web Application Pentest with Capture the Flag"
 date: 2024-04-04
 slug: "web-application-penetration-testing-project"
 type: post

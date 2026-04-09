@@ -1,5 +1,5 @@
 ---
-title: "Three-Day Cybersecurity Challenge"
+title: "From XSS to DCSync: Three-Day Penetration Test"
 date: 2024-04-29
 slug: "three-day-cybersecurity-challenge"
 type: post

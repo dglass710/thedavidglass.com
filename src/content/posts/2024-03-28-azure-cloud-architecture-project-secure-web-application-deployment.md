@@ -1,5 +1,5 @@
 ---
-title: "Azure Cloud Architecture Project: Secure Web Application Deployment"
+title: "Azure Security Architecture: Jump Box, Docker, and NSGs"
 date: 2024-03-28
 slug: "azure-cloud-architecture-project-secure-web-application-deployment"
 type: post
