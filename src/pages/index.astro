@@ -2,8 +2,8 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
 
-// Set to true and place a headshot image at public/images/headshot.webp
-const SHOW_PHOTO = false;
+// Set to true and place a headshot image at public/images/headshot.jpg
+const SHOW_PHOTO = true;
 
 const allPosts = await getCollection('posts', ({ data }) => !data.draft);
 
@@ -31,7 +31,7 @@ const tools = [
   <section class={`hero ${SHOW_PHOTO ? 'hero-split' : ''}`}>
     {SHOW_PHOTO && (
       <div class="hero-photo">
-        <img src="/images/headshot.webp" alt="David Glass" />
+        <img src="/images/headshot.jpg" alt="David Glass" />
       </div>
     )}
     <div class="hero-content">

@@ -1,8 +1,8 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 
-// Set to true and place a headshot image at public/images/headshot.webp
-const SHOW_PHOTO = false;
+// Set to true and place a headshot image at public/images/headshot.jpg
+const SHOW_PHOTO = true;
 ---
 
 <BaseLayout title="About | David Glass" description="About David Glass — software developer specializing in cybersecurity, penetration testing, and cloud security architecture.">
@@ -14,7 +14,7 @@ const SHOW_PHOTO = false;
     <div class={SHOW_PHOTO ? 'about-intro-split' : 'about-section'}>
       {SHOW_PHOTO && (
         <div class="about-photo">
-          <img src="/images/headshot.webp" alt="David Glass" />
+          <img src="/images/headshot.jpg" alt="David Glass" />
         </div>
       )}
       <div>
