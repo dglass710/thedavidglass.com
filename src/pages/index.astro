@@ -14,7 +14,7 @@ const caseStudies = allPosts
 const devSeries = allPosts
   .filter((p) => p.data.categories?.includes('Bootcamp Blog'))
   .sort((a, b) => a.data.date.getTime() - b.data.date.getTime())
-  .slice(0, 4);
+  .slice(0, 3);
 
 function formatDate(date: Date): string {
   return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
