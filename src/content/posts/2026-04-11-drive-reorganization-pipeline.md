@@ -1,9 +1,9 @@
 ---
-title: "522 GB, 156 Agents, Zero Bytes Written"
+title: "20 Years of Backups, Reorganized by 156 AI Agents"
 date: 2026-04-11
 slug: "drive-reorganization-pipeline"
 type: post
-description: "522 GB of tangled backups. 156 AI agents. Reorganization plan complete, source drive untouched."
+description: "522 GB of tangled backups, reorganized by 156 AI agents. Cut to 206 GB. Zero bytes written to the source drive."
 categories: ["projects"]
 ---
 
@@ -11,7 +11,7 @@ categories: ["projects"]
 
 Consulting engagement. A 522 GB external SSD held roughly 283,000 files — 20 years of the client's consulting work tangled with personal data, grown unnavigable after a decade of "just back it up again" across multiple laptops and cloud sync folders. The client needed a deduplicated, categorized, human-browseable reorganization — without putting the only known copy of two decades of career records at risk.
 
-I built a dedup-and-reorganization pipeline that found roughly 96 GB of unique content hidden inside 522 GB of redundant copies, coordinated a 156-agent hierarchy to classify every canonical file into a new tree, and produced an auditable plan that cuts the footprint to under half the original size. The source drive was never written to. Not one byte.
+I built a dedup-and-reorganization pipeline that found roughly 96 GB of unique content hidden inside 522 GB of redundant copies, coordinated a 156-agent hierarchy to classify every canonical file into a new tree, and executed the resulting plan against a scratch workspace on a separate drive. The reorganized tree came in at roughly 206 GB — less than half the original footprint — and the client can browse two decades of their own work again. The source drive was never written to. Not one byte.
 
 ## A Copy-Only Workflow
 
@@ -81,7 +81,7 @@ All 145 worker reports returned JSON-valid with every required field present. Al
 - **11 smart merges** — multi-source directory merges with collision handling via `(target_path, hash)` merge keys
 - **10 escalation groups** consolidating 120 individual sensitive-content flags from the workers
 
-The proposed target tree cuts the client's footprint to roughly 206 GB — a 61% reduction from the 522 GB non-junk source — and expands the client's work archive from a handful of strawman categories to more than fifty named historical engagements the bosses surfaced independently from the corpus. Three bosses independently agreed to drop a 132 GB wrapper folder wholesale after recognizing it as a Jaccard-0.995 duplicate of another machine backup.
+The target tree cut the client's footprint to roughly 206 GB — a 61% reduction from the 522 GB non-junk source — and expanded the client's work archive from a handful of strawman categories to more than fifty named historical engagements the bosses surfaced independently from the corpus. Three bosses independently agreed to drop a 132 GB wrapper folder wholesale after recognizing it as a Jaccard-0.995 duplicate of another machine backup.
 
 The encouraging signal was workers reasoning beyond their narrow assignments. Worker W042 was given the `Pictures/` subtree and — without being asked — flagged buried Puerto Rico finance records inside a folder labeled "Toni Backup" for promotion to `Personal/Finance/`, and separately flagged adult content in `Personal Videos/` for explicit owner review. That kind of unprompted judgment is what made running the swarm worth it instead of writing a deterministic rule engine.
 
@@ -93,10 +93,14 @@ The encouraging signal was workers reasoning beyond their narrow assignments. Wo
 
 **The `Read` tool has a 10k-token ceiling I didn't know about until I hit it.** The final synthesis step needed to read all ten boss reports to produce the classification rules. Every one exceeded the ceiling. The pivot was to write a small Python aggregator (`analyze_boss_reports.py`) that deserialized all ten reports, merged their structured fields, and emitted a single human-readable summary the synthesizer could work with. When inputs are structured, deterministic aggregation beats LLM synthesis. You only pay the model for the parts that need judgment.
 
-## Status and What's Next
+## The Outcome
 
-Design complete. The classification rules, target tree, merge plan, and escalation list are all checked in. Ten explicit owner-only decisions gate execution — what to do with adult content, credential vaults, old private keys, Skype chat databases, and tax records from the early 2000s. These aren't technical blockers. They're content-ownership calls that the client alone can make, and the plan is structured so execution can proceed the moment those answers come back.
+The pipeline ran to completion. `build_copy_plan.py` turned the 80 classification rules into a 66,098-file plan. `validate_copy_plan.py` confirmed zero collisions, zero coverage gaps, and no files falling outside their explicit buckets. `report_copy_plan.py` produced the human-readable audit. The client weighed in on the ten content-ownership calls the escalation list had surfaced — adult content, credential vaults, old private keys, Skype chat databases, tax records from the early 2000s — in a single afternoon. Then `execute_copy_plan.py` copied the canonical tree from the `I:` mirror into the `D:` scratch workspace. Three verification layers ran before anything left internal storage: `D:` hashes against their recorded blake3s, every baseline hash accounted for in `D:`, and `D:` compared against `H:` directly. All three passed.
 
-The execution phase is a short chain of already-scoped scripts: `build_copy_plan.py → validate_copy_plan.py → report_copy_plan.py → execute_copy_plan.py → three-layer verification`. Every copy is `shutil.copy2` from the `I:` mirror to the `D:` scratch workspace. Three verification layers run before anything commits to external storage.
+The final tree came in at roughly 206 GB — a 61% reduction from the 522 GB starting point. The client now has a browsable drive with more than fifty named historical engagements spanning twenty years of consulting work, a cleanly separated personal archive, and an `Unsorted/` bucket that caught every file the rule engine couldn't confidently place so nothing was lost in the margins. A task this size — 283,000 files, 20 years of history, 66,000 distinct canonical files needing semantic placement — is not something a person has time to do by hand. With the leverage of a 156-agent pipeline and a file-based communication layer, it became a few hours of orchestration plus compute.
 
-A task this size — 283,000 files, 20 years of history, 66,000 distinct canonical files needing semantic placement — is not something a person has time to do by hand. With the leverage of a 156-agent pipeline and a file-based communication layer, it becomes a few hours of orchestration plus compute. Next time I'd explore whether a more direct inter-agent messaging approach could shed the file-passing ceremony without reintroducing the context-flooding problem that made files necessary in the first place. I'd also package this orchestration pattern as a reusable Claude Code skill — the prompt template, the partitioning heuristic, the file-based invocation — because the same shape fits a lot of other "too big for one context" problems.
+The reaction was the part I hadn't planned for. The client had written the drive off as lost territory — too big to sort by hand, too important to delete. Getting back a navigable version of twenty years of their own work, at less than half the size, with the original still byte-for-byte intact, read to them as something they hadn't thought possible. They told me more than once they didn't know AI could do this kind of work at this scale. The interesting thing from my side is how routine the tech made the task — not heroic, not clever, just a pipeline that understood where the leverage was.
+
+## What I'd Do Next
+
+I'd explore whether a more direct inter-agent messaging approach could shed the file-passing ceremony without reintroducing the context-flooding problem that made files necessary in the first place. I'd also package this orchestration pattern as a reusable Claude Code skill — the prompt template, the partitioning heuristic, the file-based invocation — because the same shape fits a lot of other "too big for one context" problems.
