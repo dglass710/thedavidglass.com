@@ -11,7 +11,7 @@ categories: ["projects"]
 
 Consulting engagement. A 522 GB external SSD held roughly 283,000 files — 20 years of the client's consulting work tangled with personal data, grown unnavigable after a decade of "just back it up again" across multiple laptops and cloud sync folders. The client needed a deduplicated, categorized, human-browseable reorganization — without putting the only known copy of two decades of career records at risk.
 
-I built a dedup-and-reorganization pipeline that found roughly 96 GB of unique content hidden inside 522 GB of redundant copies, coordinated a 156-agent hierarchy to classify every canonical file into a new tree, and executed the resulting plan against a scratch workspace on a separate drive. The reorganized tree came in at roughly 206 GB — less than half the original footprint — and the client can browse two decades of their own work again. The source drive was never written to. Not one byte.
+I built a dedup-and-reorganization pipeline that collapsed 412 GB of hash candidates down to 96 GB of unique content, coordinated a 156-agent hierarchy to classify every canonical file into a new tree, and executed the resulting plan against a scratch workspace on a separate drive. The reorganized tree came in at roughly 206 GB — less than half the original footprint — and the client can browse two decades of their own work again. The source drive was never written to. Not one byte.
 
 ## A Copy-Only Workflow
 
@@ -37,7 +37,7 @@ Dedup ground truth comes from content hashing, not filename heuristics. The pipe
 
 The numbers that fell out: 92.7% of hash candidates collapsed into fully-identical groups. 138,996 files — 304 GB — were redundant copies. Only 10,843 of the drive's 39,450 directories (27%) held real content. The other 28,607 were wrapper noise, the same data reached by longer paths through nested backup folders. The two biggest mirror trees alone, two full machine backups with Jaccard 0.995, accounted for roughly 132 GB each.
 
-Unique content: around 96 GB. The rest was redundancy.
+Of the 412 GB that entered the hashed pool, only ~96 GB was unique. Another ~110 GB bypassed the pool entirely — files with unique (name, size) tuples, filtered out before hashing. Canonical total: around 206 GB.
 
 ## A 156-Agent Hierarchy
 
