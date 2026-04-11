@@ -7,15 +7,15 @@ const posts = await getCollection('posts', ({ data }) =>
 );
 
 const projectOrder = [
+  'three-day-cybersecurity-challenge',
   'devsecops-security-pipeline',
   'drive-reorganization-pipeline',
-  'have-i-been-pwned-offline-project',
-  'resume-tailoring-engine',
-  'custom-agent-toolkit',
-  'three-day-cybersecurity-challenge',
   'web-application-penetration-testing-project',
+  'custom-agent-toolkit',
+  'have-i-been-pwned-offline-project',
   'azure-cloud-architecture-project-secure-web-application-deployment',
   'linux-ctf-privilege-escalation',
+  'resume-tailoring-engine',
 ];
 
 const sortedProjects = posts.sort((a, b) => {

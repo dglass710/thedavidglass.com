@@ -8,15 +8,15 @@ const SHOW_PHOTO = true;
 const allPosts = await getCollection('posts', ({ data }) => !data.draft);
 
 const projectOrder = [
+  'three-day-cybersecurity-challenge',
   'devsecops-security-pipeline',
   'drive-reorganization-pipeline',
-  'have-i-been-pwned-offline-project',
-  'resume-tailoring-engine',
-  'custom-agent-toolkit',
-  'three-day-cybersecurity-challenge',
   'web-application-penetration-testing-project',
+  'custom-agent-toolkit',
+  'have-i-been-pwned-offline-project',
   'azure-cloud-architecture-project-secure-web-application-deployment',
   'linux-ctf-privilege-escalation',
+  'resume-tailoring-engine',
 ];
 
 const caseStudies = allPosts
