@@ -30,14 +30,14 @@ If the reorganization turns out wrong: delete the scratch directory and start ov
 Dedup ground truth comes from content hashing, not filename heuristics. The pipeline is a chain of single-purpose Python scripts, each reading the previous stage's output and writing an append-only checkpoint:
 
 1. **Enumerate.** Walk the drive. 283,013 files across 56,638 directories.
-2. **Prescan sizes.** Parallel `stat` with 16 workers, filtering junk (`Thumbs.db`, `.DS_Store`, Calibre metadata, `$RECYCLE.BIN`, AV signatures, Autodesk install templates). 246,155 real files, 522 GB.
+2. **Prescan sizes.** Parallel `stat` with 16 workers, filtering junk (`Thumbs.db`, `.DS_Store`, Calibre metadata, `$RECYCLE.BIN`, AV signatures, Autodesk install templates). 246,155 real files survived the filter.
 3. **Size-filter candidates.** Group by (filename, size). 54,156 groups containing 195,332 files.
 4. **Hash the candidates.** `hash_candidates.py` parallelizes blake3 across 16 workers with JSONL checkpointing. Roughly 4 hours end-to-end — I/O-bound at ~32 MB/s on the USB SSD, not CPU-bound. Zero failures.
 5. **Analyze.** `dir_similarity.py` builds recursive hash sets per directory and clusters them by hash-set equality and Jaccard neighborhood.
 
 The numbers that fell out: 92.7% of hash candidates collapsed into fully-identical groups. 138,996 files — 304 GB — were redundant copies. Only 10,843 of the drive's 39,450 directories (27%) held real content. The other 28,607 were wrapper noise, the same data reached by longer paths through nested backup folders. The two biggest mirror trees alone, two full machine backups with Jaccard 0.995, accounted for roughly 132 GB each.
 
-Of the 412 GB that entered the hashed pool, only ~96 GB was unique. Another ~110 GB bypassed the pool entirely — files with unique (name, size) tuples, filtered out before hashing. Canonical total: around 206 GB.
+Of the 412 GB that entered the hashed pool, only ~96 GB was unique. Another ~110 GB bypassed the pool entirely — files with unique (name, size) tuples, filtered out before hashing.
 
 ## A 156-Agent Hierarchy
 
@@ -81,7 +81,7 @@ All 145 worker reports returned JSON-valid with every required field present. Al
 - **11 smart merges** — multi-source directory merges with collision handling via `(target_path, hash)` merge keys
 - **10 escalation groups** consolidating 120 individual sensitive-content flags from the workers
 
-The target tree cut the client's footprint to roughly 206 GB — a 61% reduction from the 522 GB non-junk source — and expanded the client's work archive from a handful of strawman categories to more than fifty named historical engagements the bosses surfaced independently from the corpus. Three bosses independently agreed to drop a 132 GB wrapper folder wholesale after recognizing it as a Jaccard-0.995 duplicate of another machine backup.
+The target tree expanded the client's work archive from a handful of strawman categories to more than fifty named historical engagements the bosses surfaced independently from the corpus. Three bosses independently agreed to drop a 132 GB wrapper folder wholesale after recognizing it as a Jaccard-0.995 duplicate of another machine backup.
 
 The encouraging signal was workers reasoning beyond their narrow assignments. Worker W042 was given a single media subtree and, on its own initiative, flagged two things outside its scope: a batch of buried financial records it recommended promoting to a dedicated personal category, and a cluster of sensitive files it set aside for direct owner review. That kind of unprompted judgment is what made running the swarm worth it instead of writing a deterministic rule engine.
 
